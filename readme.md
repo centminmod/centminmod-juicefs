@@ -119,7 +119,12 @@ considering log /var/log/juicefs.log
 
 # Format Cloudflare R2 S3 Storage
 
-Fill in variables for your Cloudflare account id, R2 bucket access key and secret key and the R2 bucket name - create the R2 bucket before hand. The sqlite3 database will be saved at `/home/juicefs/myjuicefs.db`
+Fill in variables for your Cloudflare account id, R2 bucket access key and secret key and the R2 bucket name - create the R2 bucket before hand. The sqlite3 database will be saved at `/home/juicefs/myjuicefs.db`. 
+
+* JuiceFS supports compression algorithms which can be enabled via `--compress` option which has 3 available options - lz4, zstd or none (default).
+* `--trash-days` - number of days after which removed files will be permanently deleted. Default = 1.
+* `--block-size` - size of block in KiB
+* Other various format options listed at https://juicefs.com/docs/community/command_reference#options.
 
 ```
 cfaccountid='CF_ACCOUNT_ID'
@@ -134,6 +139,9 @@ juicefs format --storage s3 \
     --bucket https://${cfbucketname}.${cfaccountid}.r2.cloudflarestorage.com \
     --access-key $cfaccesskey \
     --secret-key $cfsecretkey \
+    --compress none \
+    --trash-days 1 \
+    --block-size 4096 \
     sqlite3://myjuicefs.db myjuicefs
 ```
 
@@ -147,12 +155,20 @@ mkdir -p /home/juicefs_mount /home/juicefs_cache
 
 ## Manual Mount
 
+There are additional JuiceFS mounting options outlined at https://juicefs.com/docs/community/command_reference#options-1
+
 Manually mount the R2 S3 storage at `/home/juicefs_mount`
 
 ```
 juicefs mount sqlite3://myjuicefs.db /home/juicefs_mount \
 --cache-dir /home/juicefs_cache \
 --cache-size 102400 \
+--buffer-size 1024 \
+--open-cache 0 \
+--attr-cache 1 \
+--entry-cache 1 \
+--dir-entry-cache 1 \
+--cache-partial-only false \
 --free-space-ratio 0.1 \
 --writeback \
 --backup-meta 1h \
@@ -164,8 +180,7 @@ juicefs mount sqlite3://myjuicefs.db /home/juicefs_mount \
 --get-timeout 300 \
 --put-timeout 900 \
 --io-retries 90 \
---prefetch 4 \
---buffer-size 1024 -d
+--prefetch 4 -d
 ```
 
 ## systemd service Mount
@@ -190,6 +205,12 @@ ExecStart=/usr/local/bin/juicefs mount \
   --writeback \
   --cache-size 102400 \
   --cache-dir /home/juicefs_cache \
+  --buffer-size 1024 \
+  --open-cache 0 \
+  --attr-cache 1 \
+  --entry-cache 1 \
+  --dir-entry-cache 1 \
+  --cache-partial-only false \
   --free-space-ratio 0.1 \
   --max-uploads 10 \
   --max-deletes 2 \
@@ -198,8 +219,7 @@ ExecStart=/usr/local/bin/juicefs mount \
   --get-timeout 300 \
   --put-timeout 900 \
   --io-retries 90 \
-  --prefetch 4 \
-  --buffer-size 1024
+  --prefetch 4
 
 ExecStop=/usr/local/bin/juicefs umount /home/juicefs_mount
 Restart=always
@@ -328,6 +348,10 @@ Private local access only:
 juicefs gateway \
 --cache-dir /home/juicefs_cache \
 --cache-size 102400 \
+--attr-cache 1 \
+--entry-cache 0 \
+--dir-entry-cache 1 \
+--prefetch 1 \
 --free-space-ratio 0.1 \
 --writeback \
 --backup-meta 1h \
@@ -342,6 +366,10 @@ Public net accessible mode:
 juicefs gateway \
 --cache-dir /home/juicefs_cache \
 --cache-size 102400 \
+--attr-cache 1 \
+--entry-cache 0 \
+--dir-entry-cache 1 \
+--prefetch 1 \
 --free-space-ratio 0.1 \
 --writeback \
 --backup-meta 1h \
@@ -372,6 +400,10 @@ ExecStart=/usr/local/bin/juicefs gateway \
   --writeback \
   --cache-size 102400 \
   --cache-dir /home/juicefs_cache \
+  --attr-cache 1 \
+  --entry-cache 0 \
+  --dir-entry-cache 1 \
+  --prefetch 1 \
   --free-space-ratio 0.1 \
   --max-uploads 10 \
   --max-deletes 2 \
@@ -379,7 +411,6 @@ ExecStart=/usr/local/bin/juicefs gateway \
   --get-timeout 300 \
   --put-timeout 900 \
   --io-retries 90 \
-  --prefetch 4 \
   --buffer-size 1024 \
   "sqlite3://myjuicefs.db" \
   localhost:3777
