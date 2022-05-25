@@ -265,7 +265,16 @@ aws s3 ls --recursive --profile r2 --endpoint-url=$url s3://$cfbucketname/
 
 Setup [JuiceFS S3 Gateway](https://juicefs.com/docs/community/s3_gateway#use-the-aws-cli) and setup AWS CLI profile `juicefs` using my [awscli-get.sh](https://awscli-get.centminmod.com/) script to configure the profile.
 
-Change `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` variable values for your S3 access and secret keys
+Install `awscli-get.sh`:
+
+```
+curl -4s https://awscli-get.centminmod.com/awscli-get.sh -o awscli-get.sh
+chmod +x awscli-get.sh
+```
+
+Change `MINIO_ROOT_USER` and `MINIO_ROOT_PASSWORD` variable values to your descired S3 Gateway access and secret keys. Make sure they're different from your Cloudflare R2 access and secret key credentials.
+
+Setup AWS CLI profile using `awscli-get.sh`:
 
 ```
 export MINIO_ROOT_USER=AKIAIOSFODNN7EXAMPLE
