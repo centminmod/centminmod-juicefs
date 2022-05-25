@@ -14,7 +14,8 @@ Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high perf
 * [Working With Cloudflare R2 S3 Mounted Directory and JuiceFS S3 Gateway](#working-with-cloudflare-r2-s3-mounted-directory-and-juicefs-s3-gateway)
   * [Mount Info](#mount-info)
   * [Inspecting JuiceFS metadata engine status](#inspecting-juicefs-metadata-engine-status)
-  * [JuiceFS Benchmarks](#juicefs-benchmarks)
+  * [Warmup Local Cache](#warmup-local-cache)
+* [JuiceFS Benchmarks](#juicefs-benchmarks)
 * [Destroying JuiceFS Filesystem](#destroying-juicefs-filesystem)
 
 # Install JuiceFS binary
@@ -415,6 +416,14 @@ juicefs status sqlite3://myjuicefs.db
     }
   ]
 }
+```
+
+# Warmup Local Cache
+
+```
+juicefs warmup -p 2 /home/juicefs_mount
+Warmed up paths count: 1 / 1 [==============================================================]  done      
+2022/05/25 05:29:18.497915 juicefs[43684] <INFO>: Successfully warmed up 1 paths [warmup.go:209]
 ```
 
 # JuiceFS Benchmarks
