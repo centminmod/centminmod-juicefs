@@ -1,6 +1,6 @@
 # JuiceFS Setup
 
-Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high performanced POSIX compatible shared file system on Centmin Mod LEMP stack using Cloudflare R2 S3 compatible storage and local sqlite3 metadata engine cache.
+Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high performanced POSIX compatible shared file system on Centmin Mod LEMP stack using Cloudflare R2 S3 compatible storage and local sqlite3 metadata engine cached.
 
 * [Install JuiceFS binary](#install-juicefs-binary)
 * [Setup JuiceFS logrotation](#setup-juicefs-logrotation)
@@ -15,6 +15,7 @@ Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high perf
   * [Mount Info](#mount-info)
   * [Inspecting JuiceFS metadata engine status](#inspecting-juicefs-metadata-engine-status)
   * [Warmup Local Cache](#warmup-local-cache)
+  * [Check Disk Size](#check-disk-size)
 * [JuiceFS Benchmarks](#juicefs-benchmarks)
 * [Destroying JuiceFS Filesystem](#destroying-juicefs-filesystem)
 
@@ -418,12 +419,20 @@ juicefs status sqlite3://myjuicefs.db
 }
 ```
 
-# Warmup Local Cache
+## Warmup Local Cache
 
 ```
 juicefs warmup -p 2 /home/juicefs_mount
 Warmed up paths count: 1 / 1 [==============================================================]  done      
 2022/05/25 05:29:18.497915 juicefs[43684] <INFO>: Successfully warmed up 1 paths [warmup.go:209]
+```
+
+## Check Disk Size
+
+```
+df -hT /home/juicefs_mount
+Filesystem        Type          Size  Used Avail Use% Mounted on
+JuiceFS:myjuicefs fuse.juicefs  1.0P  4.0K  1.0P   1% /home/juicefs_mount
 ```
 
 # JuiceFS Benchmarks
