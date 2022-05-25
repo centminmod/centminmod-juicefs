@@ -2,7 +2,7 @@
 
 Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high performanced POSIX compatible shared file system on Centmin Mod LEMP stack using [JuiceFS caching](https://juicefs.com/docs/community/cache_management) with [Cloudflare R2](https://blog.cloudflare.com/r2-open-beta/) - [S3 compatible object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) and [local sqlite3 metadata engine](https://juicefs.com/docs/community/databases_for_metadata/).
 
-JuiceFS implements an architecture that seperates "data" and "metadata" storage. When using JuiceFS to store data, the data itself is persisted in [object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) (e.g., Amazon S3), and the corresponding metadata can be persisted in various databases ([Metadata Engines](https://juicefs.com/docs/community/databases_for_metadata/)) such as Redis, MariaDB, MySQL, TiKV, SQLite, KeyDB, PostgreSQL, BadgerDB, and FoundationDB.
+JuiceFS implements an architecture that seperates "data" and "metadata" storage. When using JuiceFS to store data, the data itself is persisted in [object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) (e.g., Amazon S3, OpenStack Swift, Ceph, Azure Blob and MinIO), and the corresponding metadata can be persisted in various databases ([Metadata Engines](https://juicefs.com/docs/community/databases_for_metadata/)) such as Redis, MariaDB, MySQL, TiKV, SQLite, KeyDB, PostgreSQL, BadgerDB, and FoundationDB.
 
 * [Install JuiceFS binary](#install-juicefs-binary)
 * [Setup JuiceFS logrotation](#setup-juicefs-logrotation)
@@ -98,7 +98,22 @@ mkdir -p /home/juicefs_mount /home/juicefs_cache
 Manually mount the R2 S3 storage at `/home/juicefs_mount`
 
 ```
-juicefs mount sqlite3://myjuicefs.db /home/juicefs_mount --cache-dir /home/juicefs_cache --cache-size 102400 --free-space-ratio 0.1 --writeback --backup-meta 1h --no-usage-report --max-uploads 10 --max-deletes 2 --backup-meta 1h --log /var/log/juicefs.log --get-timeout 300 --put-timeout 900 --io-retries 90 --prefetch 4 --buffer-size 1024 -d
+juicefs mount sqlite3://myjuicefs.db /home/juicefs_mount \
+--cache-dir /home/juicefs_cache \
+--cache-size 102400 \
+--free-space-ratio 0.1 \
+--writeback \
+--backup-meta 1h \
+--no-usage-report \
+--max-uploads 10 \
+--max-deletes 2 \
+--backup-meta 1h \
+--log /var/log/juicefs.log \
+--get-timeout 300 \
+--put-timeout 900 \
+--io-retries 90 \
+--prefetch 4 \
+--buffer-size 1024 -d
 ```
 
 ## systemd service Mount
@@ -249,14 +264,28 @@ Private local access only:
 
 ```
 # local private access
-juicefs gateway --cache-dir /home/juicefs_cache --cache-size 102400 --free-space-ratio 0.1 --writeback --backup-meta 1h --no-usage-report --buffer-size 1024 sqlite3://myjuicefs.db localhost:3777
+juicefs gateway \
+--cache-dir /home/juicefs_cache \
+--cache-size 102400 \
+--free-space-ratio 0.1 \
+--writeback \
+--backup-meta 1h \
+--no-usage-report \
+--buffer-size 1024 sqlite3://myjuicefs.db localhost:3777
 ```
 
 Public net accessible mode:
 
 ```
 # public access
-juicefs gateway --cache-dir /home/juicefs_cache --cache-size 102400 --free-space-ratio 0.1 --writeback --backup-meta 1h --no-usage-report --buffer-size 1024 sqlite3://myjuicefs.db 0.0.0.0:3777
+juicefs gateway \
+--cache-dir /home/juicefs_cache \
+--cache-size 102400 \
+--free-space-ratio 0.1 \
+--writeback \
+--backup-meta 1h \
+--no-usage-report \
+--buffer-size 1024 sqlite3://myjuicefs.db 0.0.0.0:3777
 ```
 
 ## systemd service Starting JuiceFS S3 Gateway
