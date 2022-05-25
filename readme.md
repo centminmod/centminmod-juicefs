@@ -1,6 +1,8 @@
 # JuiceFS Setup
 
-Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high performanced POSIX compatible shared file system on Centmin Mod LEMP stack using Cloudflare R2 S3 compatible storage and local sqlite3 metadata engine cached.
+Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high performanced POSIX compatible shared file system on Centmin Mod LEMP stack using [JuiceFS caching](https://juicefs.com/docs/community/cache_management) with [Cloudflare R2](https://blog.cloudflare.com/r2-open-beta/) - [S3 compatible object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) and [local sqlite3 metadata engine](https://juicefs.com/docs/community/databases_for_metadata/).
+
+JuiceFS implements an architecture that seperates "data" and "metadata" storage. When using JuiceFS to store data, the data itself is persisted in [object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) (e.g., Amazon S3), and the corresponding metadata can be persisted in various databases ([Metadata Engines](https://juicefs.com/docs/community/databases_for_metadata/)) such as Redis, MariaDB, MySQL, TiKV, SQLite, KeyDB, PostgreSQL, BadgerDB, and FoundationDB.
 
 * [Install JuiceFS binary](#install-juicefs-binary)
 * [Setup JuiceFS logrotation](#setup-juicefs-logrotation)
@@ -241,7 +243,7 @@ juicefs
 
 ## Manually Starting JuiceFS S3 Gateway
 
-Manually starting creating JuiceFS S3 Gateway
+Manually starting created JuiceFS S3 Gateway
 
 Private local access only:
 
