@@ -1,8 +1,8 @@
 # JuiceFS Setup
 
-Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high performanced POSIX compatible shared file system on Centmin Mod LEMP stack using [JuiceFS caching](https://juicefs.com/docs/community/cache_management) with [Cloudflare R2](https://blog.cloudflare.com/r2-open-beta/) - [S3 compatible object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) and [local sqlite3 metadata engine](https://juicefs.com/docs/community/databases_for_metadata/).
+Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high performanced POSIX compatible shared file system on Centmin Mod LEMP stack using [JuiceFS caching](https://juicefs.com/docs/community/cache_management) with [Cloudflare R2](https://blog.cloudflare.com/r2-open-beta/) - [S3 compatible object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) and [local sqlite3 Metadata Engine](https://juicefs.com/docs/community/databases_for_metadata/).
 
-JuiceFS implements an architecture that seperates "data" and "metadata" storage. When using JuiceFS to store data, the data itself is persisted in [object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) (e.g., Amazon S3, OpenStack Swift, Ceph, Azure Blob and MinIO), and the corresponding metadata can be persisted in various databases ([Metadata Engines](https://juicefs.com/docs/community/databases_for_metadata/)) such as Redis, MariaDB, MySQL, TiKV, SQLite, KeyDB, PostgreSQL, BadgerDB, and FoundationDB.
+JuiceFS implements an architecture that seperates "data" and "metadata" storage. When using JuiceFS to store data, the data itself is persisted in [object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) (e.g., Amazon S3, OpenStack Swift, Ceph, Azure Blob and MinIO), and the corresponding metadata can be persisted in various databases ([Metadata Engines](https://juicefs.com/docs/community/databases_for_metadata/)) such as Redis, Amazon MemoryDB, MariaDB, MySQL, TiKV, etcd, SQLite, KeyDB, PostgreSQL, BadgerDB, and FoundationDB.
 
 * [Install JuiceFS binary](#install-juicefs-binary)
 * [Setup JuiceFS logrotation](#setup-juicefs-logrotation)
@@ -34,6 +34,58 @@ tar -zxf "juicefs-${JFS_LATEST_TAG}-linux-amd64.tar.gz"
 
 install juicefs /usr/local/bin
 \cp -af /usr/local/bin/juicefs /sbin/mount.juicefs
+```
+```
+juicefs -V
+juicefs version 1.0.0-beta3+2022-05-05.0fb9155
+```
+```
+juicefs --help
+NAME:
+   juicefs - A POSIX file system built on Redis and object storage.
+
+USAGE:
+   juicefs [global options] command [command options] [arguments...]
+
+VERSION:
+   1.0.0-beta3+2022-05-05.0fb9155
+
+COMMANDS:
+   ADMIN:
+     format   Format a volume
+     config   Change configuration of a volume
+     destroy  Destroy an existing volume
+     gc       Garbage collector of objects in data storage
+     fsck     Check consistency of a volume
+     dump     Dump metadata into a JSON file
+     load     Load metadata from a previously dumped JSON file
+   INSPECTOR:
+     status   Show status of a volume
+     stats    Show real time performance statistics of JuiceFS
+     profile  Show profiling of operations completed in JuiceFS
+     info     Show internal information of a path or inode
+   SERVICE:
+     mount    Mount a volume
+     umount   Unmount a volume
+     gateway  Start an S3-compatible gateway
+     webdav   Start a WebDAV server
+   TOOL:
+     bench   Run benchmark on a path
+     warmup  Build cache for target directories/files
+     rmr     Remove directories recursively
+     sync    Sync between two storages
+
+GLOBAL OPTIONS:
+   --verbose, --debug, -v  enable debug log (default: false)
+   --quiet, -q             only warning and errors (default: false)
+   --trace                 enable trace log (default: false)
+   --no-agent              disable pprof (:6060) and gops (:6070) agent (default: false)
+   --no-color              disable colors (default: false)
+   --help, -h              show help (default: false)
+   --version, -V           print only the version (default: false)
+
+COPYRIGHT:
+   Apache License 2.0
 ```
 
 ## Setup JuiceFS logrotation
