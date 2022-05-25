@@ -2,6 +2,21 @@
 
 Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high performanced POSIX compatible shared file system on Centmin Mod LEMP stack using Cloudflare R2 S3 compatible storage and local sqlite3 metadata engine cache.
 
+* [Install JuiceFS binary](#install-juicefs-binary)
+* [Setup JuiceFS logrotation](#setup-juicefs-logrotation)
+* [Format Cloudflare R2 S3 Storage](#format-cloudflare-r2-s3-storage)
+* [Mount the JuiceFS Formatted R2 S3 Storage](#mount-the-juicefs-formatted-r2-s3-storage)
+  * [Manual Mount](#manual-mount)
+  * [systemd service Mount](#systemd-service-mount)
+* [Setup JuiceFS S3 Gateway](#setup-juicefs-s3-gateway)
+  * [Manually Starting JuiceFS S3 Gateway](#manually-starting-juicefs-s3-gateway)
+  * [systemd service Starting JuiceFS S3 Gateway](#systemd-service-starting-juicefs-s3-gateway)
+* [Working With Cloudflare R2 S3 Mounted Directory and JuiceFS S3 Gateway](#working-with-cloudflare-r2-s3-mounted-directory-and-juicefs-s3-gateway)
+  * [Mount Info](#mount-info)
+  * [Inspecting JuiceFS metadata engine status](#inspecting-juicefs-metadata-engine-status)
+  * [JuiceFS Benchmarks](#juicefs-benchmarks)
+* [Destroying JuiceFS Filesystem](#destroying-juicefs-filesystem)
+
 # Install JuiceFS binary
 
 ```
@@ -500,6 +515,8 @@ juicefs stats /home/juicefs_mount
 ```
 
 # Destroying JuiceFS Filesystem
+
+Need to get the metadata engine's UUID via jq JSON tool piped query and pass it to `juicefs destroy` command.
 
 ```
 uuid=$(juicefs status sqlite3://myjuicefs.db | jq -r '.Setting.UUID')
