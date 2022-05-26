@@ -140,7 +140,7 @@ juicefs format --storage s3 \
     --access-key $cfaccesskey \
     --secret-key $cfsecretkey \
     --compress none \
-    --trash-days 1 \
+    --trash-days 0 \
     --block-size 4096 \
     sqlite3://myjuicefs.db myjuicefs
 ```
