@@ -655,6 +655,114 @@ juicefs stats /home/juicefs_mount
  7.0% 1338M   48M|   0     0     0     0 |   0     0 |   0     0 |   0    32M
 ```
 
+### fio test
+
+Pre-warmed up cache directory fio test
+
+```
+ls -lah /home/juicefs_mount/fio                                
+total 4.1G
+drwxr-xr-x 2 root root 4.0K May 26 01:23 .
+drwxrwxrwx 3 root root 4.0K May 26 01:15 ..
+-rw-r--r-- 1 root root 1.0G May 26 01:16 sequential-read.0.0
+-rw-r--r-- 1 root root 1.0G May 26 01:20 sequential-read.1.0
+-rw-r--r-- 1 root root 1.0G May 26 01:24 sequential-read.2.0
+-rw-r--r-- 1 root root 1.0G May 26 01:23 sequential-read.3.0
+```
+```
+juicefs warmup -p 2 /home/juicefs_mount/fio                    
+Warmed up paths count: 1 / 1 [==============================================================]  done      
+2022/05/26 01:38:00.362641 juicefs[45285] <INFO>: Successfully warmed up 1 paths [warmup.go:209]
+```
+```
+fio --name=sequential-read --directory=/home/juicefs_mount/fio --rw=read --refill_buffers --bs=4M --size=1G --numjobs=4
+
+sequential-read: (g=0): rw=read, bs=(R) 4096KiB-4096KiB, (W) 4096KiB-4096KiB, (T) 4096KiB-4096KiB, ioengine=psync, iodepth=1
+...
+fio-3.7
+Starting 4 processes
+Jobs: 4 (f=4)
+sequential-read: (groupid=0, jobs=1): err= 0: pid=47804: Thu May 26 01:38:12 2022
+   read: IOPS=179, BW=716MiB/s (751MB/s)(1024MiB/1430msec)
+    clat (usec): min=1688, max=15592, avg=5571.03, stdev=1390.95
+     lat (usec): min=1689, max=15592, avg=5572.39, stdev=1390.89
+    clat percentiles (usec):
+     |  1.00th=[ 2278],  5.00th=[ 3884], 10.00th=[ 4359], 20.00th=[ 4621],
+     | 30.00th=[ 4948], 40.00th=[ 5276], 50.00th=[ 5473], 60.00th=[ 5669],
+     | 70.00th=[ 5932], 80.00th=[ 6325], 90.00th=[ 6783], 95.00th=[ 7439],
+     | 99.00th=[ 9241], 99.50th=[14615], 99.90th=[15533], 99.95th=[15533],
+     | 99.99th=[15533]
+   bw (  KiB/s): min=704512, max=720896, per=24.30%, avg=712704.00, stdev=11585.24, samples=2
+   iops        : min=  172, max=  176, avg=174.00, stdev= 2.83, samples=2
+  lat (msec)   : 2=0.78%, 4=4.69%, 10=93.75%, 20=0.78%
+  cpu          : usr=0.14%, sys=46.61%, ctx=2730, majf=0, minf=1055
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=47805: Thu May 26 01:38:12 2022
+   read: IOPS=180, BW=721MiB/s (756MB/s)(1024MiB/1420msec)
+    clat (usec): min=2722, max=12203, avg=5530.93, stdev=1193.63
+     lat (usec): min=2723, max=12204, avg=5532.24, stdev=1193.64
+    clat percentiles (usec):
+     |  1.00th=[ 3490],  5.00th=[ 4080], 10.00th=[ 4359], 20.00th=[ 4686],
+     | 30.00th=[ 4948], 40.00th=[ 5145], 50.00th=[ 5407], 60.00th=[ 5604],
+     | 70.00th=[ 5866], 80.00th=[ 6128], 90.00th=[ 6849], 95.00th=[ 7635],
+     | 99.00th=[11994], 99.50th=[12125], 99.90th=[12256], 99.95th=[12256],
+     | 99.99th=[12256]
+   bw (  KiB/s): min=696320, max=737280, per=24.44%, avg=716800.00, stdev=28963.09, samples=2
+   iops        : min=  170, max=  180, avg=175.00, stdev= 7.07, samples=2
+  lat (msec)   : 4=3.52%, 10=95.31%, 20=1.17%
+  cpu          : usr=0.00%, sys=47.71%, ctx=2751, majf=0, minf=1054
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=47806: Thu May 26 01:38:12 2022
+   read: IOPS=179, BW=716MiB/s (751MB/s)(1024MiB/1430msec)
+    clat (usec): min=1880, max=13391, avg=5570.19, stdev=1200.55
+     lat (usec): min=1881, max=13393, avg=5571.52, stdev=1200.50
+    clat percentiles (usec):
+     |  1.00th=[ 2540],  5.00th=[ 4113], 10.00th=[ 4424], 20.00th=[ 4752],
+     | 30.00th=[ 5014], 40.00th=[ 5211], 50.00th=[ 5473], 60.00th=[ 5735],
+     | 70.00th=[ 5997], 80.00th=[ 6259], 90.00th=[ 6849], 95.00th=[ 7177],
+     | 99.00th=[ 8717], 99.50th=[12387], 99.90th=[13435], 99.95th=[13435],
+     | 99.99th=[13435]
+   bw (  KiB/s): min=688128, max=737280, per=24.30%, avg=712704.00, stdev=34755.71, samples=2
+   iops        : min=  168, max=  180, avg=174.00, stdev= 8.49, samples=2
+  lat (msec)   : 2=0.39%, 4=3.52%, 10=95.31%, 20=0.78%
+  cpu          : usr=0.56%, sys=46.61%, ctx=2806, majf=0, minf=1055
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=47807: Thu May 26 01:38:12 2022
+   read: IOPS=179, BW=719MiB/s (754MB/s)(1024MiB/1425msec)
+    clat (usec): min=2478, max=11410, avg=5550.24, stdev=1014.45
+     lat (usec): min=2480, max=11411, avg=5551.59, stdev=1014.37
+    clat percentiles (usec):
+     |  1.00th=[ 3392],  5.00th=[ 4146], 10.00th=[ 4424], 20.00th=[ 4817],
+     | 30.00th=[ 5080], 40.00th=[ 5276], 50.00th=[ 5473], 60.00th=[ 5669],
+     | 70.00th=[ 5866], 80.00th=[ 6259], 90.00th=[ 6718], 95.00th=[ 7111],
+     | 99.00th=[ 8225], 99.50th=[ 9241], 99.90th=[11469], 99.95th=[11469],
+     | 99.99th=[11469]
+   bw (  KiB/s): min=720896, max=761856, per=25.28%, avg=741376.00, stdev=28963.09, samples=2
+   iops        : min=  176, max=  186, avg=181.00, stdev= 7.07, samples=2
+  lat (msec)   : 4=4.30%, 10=95.31%, 20=0.39%
+  cpu          : usr=0.14%, sys=46.98%, ctx=2771, majf=0, minf=1054
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+   READ: bw=2864MiB/s (3003MB/s), 716MiB/s-721MiB/s (751MB/s-756MB/s), io=4096MiB (4295MB), run=1420-1430msec
+```
+
 # Destroying JuiceFS Filesystem
 
 Need to get the metadata engine's UUID via jq JSON tool piped query and pass it to `juicefs destroy` command.
