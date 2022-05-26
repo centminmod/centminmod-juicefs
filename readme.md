@@ -121,7 +121,7 @@ considering log /var/log/juicefs.log
 
 Fill in variables for your Cloudflare account id, R2 bucket access key and secret key and the R2 bucket name - create the R2 bucket before hand. The sqlite3 database will be saved at `/home/juicefs/myjuicefs.db`. 
 
-* JuiceFS supports compression algorithms which can be enabled via `--compress` option which has 3 available options - lz4, zstd or none (default).
+* JuiceFS supports compression algorithms which can be enabled via `--compress` option which have 3 available options - lz4, zstd or none (default).
 * `--trash-days` - number of days after which removed files will be permanently deleted. Default = 1.
 * `--block-size` - size of block in KiB
 * Other various format options listed at https://juicefs.com/docs/community/command_reference#options.
@@ -661,9 +661,10 @@ Need to get the metadata engine's UUID via jq JSON tool piped query and pass it 
 
 ```
 uuid=$(juicefs status sqlite3://myjuicefs.db | jq -r '.Setting.UUID')
-systemctl stop juicefs
+systemctl stop juicefs.service juicefs-gateway.service
 echo y | juicefs destroy sqlite3://myjuicefs.db $uuid
 rm -rf /home/juicefs_cache/*
+rm -f /home/juicefs/myjuicefs.db
 ```
 
 ```
