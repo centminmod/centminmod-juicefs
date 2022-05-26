@@ -170,7 +170,7 @@ juicefs mount sqlite3://myjuicefs.db /home/juicefs_mount \
 --dir-entry-cache 1 \
 --cache-partial-only false \
 --free-space-ratio 0.1 \
---writeback \
+--writeback true \
 --backup-meta 1h \
 --no-usage-report \
 --max-uploads 10 \
@@ -202,7 +202,7 @@ ExecStart=/usr/local/bin/juicefs mount \
   "sqlite3://myjuicefs.db" \
   /home/juicefs_mount \
   --no-usage-report \
-  --writeback \
+  --writeback true \
   --cache-size 102400 \
   --cache-dir /home/juicefs_cache \
   --buffer-size 1024 \
@@ -353,7 +353,7 @@ juicefs gateway \
 --dir-entry-cache 1 \
 --prefetch 1 \
 --free-space-ratio 0.1 \
---writeback \
+--writeback true \
 --backup-meta 1h \
 --no-usage-report \
 --buffer-size 1024 sqlite3://myjuicefs.db localhost:3777
@@ -371,7 +371,7 @@ juicefs gateway \
 --dir-entry-cache 1 \
 --prefetch 1 \
 --free-space-ratio 0.1 \
---writeback \
+--writeback true \
 --backup-meta 1h \
 --no-usage-report \
 --buffer-size 1024 sqlite3://myjuicefs.db 0.0.0.0:3777
@@ -397,7 +397,7 @@ Type=simple
 WorkingDirectory=/home/juicefs
 ExecStart=/usr/local/bin/juicefs gateway \
   --no-usage-report \
-  --writeback \
+  --writeback true \
   --cache-size 102400 \
   --cache-dir /home/juicefs_cache \
   --attr-cache 1 \
