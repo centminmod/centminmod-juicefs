@@ -5,6 +5,7 @@ Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high perf
 JuiceFS implements an architecture that seperates "data" and "metadata" storage. When using JuiceFS to store data, the data itself is persisted in [object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) (e.g., Amazon S3, OpenStack Swift, Ceph, Azure Blob or MinIO), and the corresponding metadata can be persisted in various databases ([Metadata Engines](https://juicefs.com/docs/community/databases_for_metadata/)) such as Redis, Amazon MemoryDB, MariaDB, MySQL, TiKV, etcd, SQLite, KeyDB, PostgreSQL, BadgerDB, or FoundationDB.
 
 * [Install JuiceFS binary](#install-juicefs-binary)
+* [Upgrade JuiceFS binary](#upgrade-juicefs-binary)
 * [Setup JuiceFS logrotation](#setup-juicefs-logrotation)
 * [Format Cloudflare R2 S3 Storage](#format-cloudflare-r2-s3-storage)
 * [Mount the JuiceFS Formatted R2 S3 Storage](#mount-the-juicefs-formatted-r2-s3-storage)
@@ -28,7 +29,7 @@ cd /svr-setup
 
 JFS_LATEST_TAG=$(curl -s https://api.github.com/repos/juicedata/juicefs/releases/latest | grep 'tag_name' | cut -d '"' -f 4 | tr -d 'v')
 
-wget "https://github.com/juicedata/juicefs/releases/download/v${JFS_LATEST_TAG}/juicefs-${JFS_LATEST_TAG}-linux-amd64.tar.gz"
+wget "https://github.com/juicedata/juicefs/releases/download/v${JFS_LATEST_TAG}/juicefs-${JFS_LATEST_TAG}-linux-amd64.tar.gz" -O juicefs-${JFS_LATEST_TAG}-linux-amd64.tar.gz
 
 tar -zxf "juicefs-${JFS_LATEST_TAG}-linux-amd64.tar.gz"
 
@@ -86,6 +87,97 @@ GLOBAL OPTIONS:
 
 COPYRIGHT:
    Apache License 2.0
+```
+
+# Upgrade JuiceFS Binary
+
+Following instructions for upgrading JuiceFS client [here](https://github.com/juicedata/juicefs/blob/main/docs/en/faq.md#how-to-upgrade-juicefs-client) involves:
+
+1. Unmounting the JuiceFS mount. If you setup using [systemd JuiceFS service file](#mount-the-juicefs-formatted-r2-s3-storage), then it's just a service stop for it and the [JuiceFS S3 Gateway service](#systemd-service-starting-juicefs-s3-gateway).
+
+Upgrading to [JuiceFS v1.0.0-rc1](https://github.com/juicedata/juicefs/releases/tag/v1.0.0-rc1):
+
+```
+systemctl stop juicefs.service juicefs-gateway.service
+```
+
+2. Updating JuiceFS binary
+
+```
+cd /svr-setup
+
+JFS_LATEST_TAG=$(curl -s https://api.github.com/repos/juicedata/juicefs/releases/latest | grep 'tag_name' | cut -d '"' -f 4 | tr -d 'v')
+
+wget "https://github.com/juicedata/juicefs/releases/download/v${JFS_LATEST_TAG}/juicefs-${JFS_LATEST_TAG}-linux-amd64.tar.gz" -O juicefs-${JFS_LATEST_TAG}-linux-amd64.tar.gz
+
+tar -zxf "juicefs-${JFS_LATEST_TAG}-linux-amd64.tar.gz"
+
+install juicefs /usr/local/bin
+\cp -af /usr/local/bin/juicefs /sbin/mount.juicefs
+```
+
+3. Starting JuiceFS and JuiceFS S3 Gateway services
+
+```
+systemctl start juicefs.service juicefs-gateway.service
+systemctl status juicefs.service juicefs-gateway.service
+```
+
+4. Checking updated JuiceFS binary and mount.
+
+```
+juicefs -V
+juicefs version 1.0.0-rc1+2022-06-15.0c63cd8
+
+df -hT /home/juicefs_mount
+Filesystem        Type          Size  Used Avail Use% Mounted on
+JuiceFS:myjuicefs fuse.juicefs  1.0P     0  1.0P   0% /home/juicefs_mount
+```
+
+```
+cd /home/juicefs
+
+juicefs status sqlite3://myjuicefs.db
+2022/06/21 13:54:45.570232 juicefs[28472] <INFO>: Meta address: sqlite3://myjuicefs.db [interface.go:397]
+{
+  "Setting": {
+    "Name": "myjuicefs",
+    "UUID": "2109366a-5f4f-4449-8723-dfec21f48e8f",
+    "Storage": "s3",
+    "Bucket": "https://juicefs.cfaccountid.r2.cloudflarestorage.com",
+    "AccessKey": "cfaccesskey",
+    "SecretKey": "removed",
+    "BlockSize": 4096,
+    "Compression": "none",
+    "Shards": 0,
+    "HashPrefix": false,
+    "Capacity": 0,
+    "Inodes": 0,
+    "KeyEncrypted": true,
+    "TrashDays": 0,
+    "MetaVersion": 1,
+    "MinClientVersion": "",
+    "MaxClientVersion": ""
+  },
+  "Sessions": [
+    {
+      "Sid": 19,
+      "Expire": "2022-06-21T13:55:43Z",
+      "Version": "1.0.0-rc1+2022-06-15.0c63cd8",
+      "HostName": "host.domain.com",
+      "MountPoint": "/home/juicefs_mount",
+      "ProcessID": 28376
+    },
+    {
+      "Sid": 20,
+      "Expire": "2022-06-21T13:55:44Z",
+      "Version": "1.0.0-rc1+2022-06-15.0c63cd8",
+      "HostName": "host.domain.com",
+      "MountPoint": "s3gateway",
+      "ProcessID": 28387
+    }
+  ]
+}
 ```
 
 ## Setup JuiceFS logrotation
@@ -556,6 +648,106 @@ Warmed up paths count: 1 / 1 [==================================================
 df -hT /home/juicefs_mount
 Filesystem        Type          Size  Used Avail Use% Mounted on
 JuiceFS:myjuicefs fuse.juicefs  1.0P  4.0K  1.0P   1% /home/juicefs_mount
+```
+
+## Metrics
+
+```
+curl -s http://localhost:9567/metrics
+```
+
+checking blockcache metrics
+
+```
+curl -s http://localhost:9567/metrics | grep blockcache | egrep -v '\#|hist'
+
+juicefs_blockcache_blocks{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_blockcache_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_blockcache_drops{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_blockcache_evicts{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_blockcache_hit_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.62144e+07
+juicefs_blockcache_hits{mp="/home/juicefs_mount",vol_name="myjuicefs"} 200
+juicefs_blockcache_miss{mp="/home/juicefs_mount",vol_name="myjuicefs"} 647
+juicefs_blockcache_miss_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.680160256e+09
+juicefs_blockcache_write_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.173698048e+09
+juicefs_blockcache_writes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 712
+```
+
+filtered metrics
+
+```
+curl -s http://localhost:9567/metrics | egrep -v '\#|hist|bucket'
+
+juicefs_blockcache_blocks{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_blockcache_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_blockcache_drops{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_blockcache_evicts{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_blockcache_hit_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.62144e+07
+juicefs_blockcache_hits{mp="/home/juicefs_mount",vol_name="myjuicefs"} 200
+juicefs_blockcache_miss{mp="/home/juicefs_mount",vol_name="myjuicefs"} 647
+juicefs_blockcache_miss_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.680160256e+09
+juicefs_blockcache_write_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.173698048e+09
+juicefs_blockcache_writes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 712
+juicefs_cpu_usage{mp="/home/juicefs_mount",vol_name="myjuicefs"} 21.072261
+juicefs_fuse_open_handlers{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_fuse_read_size_bytes_sum{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.173698048e+09
+juicefs_fuse_read_size_bytes_count{mp="/home/juicefs_mount",vol_name="myjuicefs"} 16584
+juicefs_fuse_written_size_bytes_sum{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.173698048e+09
+juicefs_fuse_written_size_bytes_count{mp="/home/juicefs_mount",vol_name="myjuicefs"} 16584
+juicefs_go_build_info{checksum="",mp="/home/juicefs_mount",path="github.com/juicedata/juicefs",version="(devel)",vol_name="myjuicefs"} 1
+juicefs_go_gc_duration_seconds{mp="/home/juicefs_mount",vol_name="myjuicefs",quantile="0"} 2.4418e-05
+juicefs_go_gc_duration_seconds{mp="/home/juicefs_mount",vol_name="myjuicefs",quantile="0.25"} 4.3148e-05
+juicefs_go_gc_duration_seconds{mp="/home/juicefs_mount",vol_name="myjuicefs",quantile="0.5"} 5.6996e-05
+juicefs_go_gc_duration_seconds{mp="/home/juicefs_mount",vol_name="myjuicefs",quantile="0.75"} 0.000106379
+juicefs_go_gc_duration_seconds{mp="/home/juicefs_mount",vol_name="myjuicefs",quantile="1"} 0.000342952
+juicefs_go_gc_duration_seconds_sum{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0.001999786
+juicefs_go_gc_duration_seconds_count{mp="/home/juicefs_mount",vol_name="myjuicefs"} 22
+juicefs_go_goroutines{mp="/home/juicefs_mount",vol_name="myjuicefs"} 62
+juicefs_go_info{mp="/home/juicefs_mount",version="go1.17.8",vol_name="myjuicefs"} 1
+juicefs_go_memstats_alloc_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.8662952e+07
+juicefs_go_memstats_alloc_bytes_total{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.377878736e+09
+juicefs_go_memstats_buck_hash_sys_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.537716e+06
+juicefs_go_memstats_frees_total{mp="/home/juicefs_mount",vol_name="myjuicefs"} 4.703242e+06
+juicefs_go_memstats_gc_cpu_fraction{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.1818653907586683e-05
+juicefs_go_memstats_gc_sys_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 4.8828976e+07
+juicefs_go_memstats_heap_alloc_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.8662952e+07
+juicefs_go_memstats_heap_idle_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.28196608e+09
+juicefs_go_memstats_heap_inuse_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 3.3079296e+07
+juicefs_go_memstats_heap_objects{mp="/home/juicefs_mount",vol_name="myjuicefs"} 53970
+juicefs_go_memstats_heap_released_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.278754816e+09
+juicefs_go_memstats_heap_sys_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.315045376e+09
+juicefs_go_memstats_last_gc_time_seconds{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.6535426808430629e+09
+juicefs_go_memstats_lookups_total{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_go_memstats_mallocs_total{mp="/home/juicefs_mount",vol_name="myjuicefs"} 4.757212e+06
+juicefs_go_memstats_mcache_inuse_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 9600
+juicefs_go_memstats_mcache_sys_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 16384
+juicefs_go_memstats_mspan_inuse_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 312256
+juicefs_go_memstats_mspan_sys_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.736128e+06
+juicefs_go_memstats_next_gc_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 5.738088e+07
+juicefs_go_memstats_other_sys_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.769556e+06
+juicefs_go_memstats_stack_inuse_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.0354688e+07
+juicefs_go_memstats_stack_sys_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.0354688e+07
+juicefs_go_memstats_sys_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.380288824e+09
+juicefs_go_threads{mp="/home/juicefs_mount",vol_name="myjuicefs"} 271
+juicefs_memory{mp="/home/juicefs_mount",vol_name="myjuicefs"} 9.64608e+07
+juicefs_object_request_data_bytes{method="GET",mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.147483648e+09
+juicefs_object_request_data_bytes{method="PUT",mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.205155328e+09
+juicefs_object_request_errors{mp="/home/juicefs_mount",vol_name="myjuicefs"} 337
+juicefs_process_cpu_seconds_total{mp="/home/juicefs_mount",vol_name="myjuicefs"} 21.06
+juicefs_process_max_fds{mp="/home/juicefs_mount",vol_name="myjuicefs"} 524288
+juicefs_process_open_fds{mp="/home/juicefs_mount",vol_name="myjuicefs"} 23
+juicefs_process_resident_memory_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 9.64608e+07
+juicefs_process_start_time_seconds{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.65354147984e+09
+juicefs_process_virtual_memory_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 2.159013888e+09
+juicefs_process_virtual_memory_max_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1.8446744073709552e+19
+juicefs_staging_block_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_staging_blocks{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_store_cache_size_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_transaction_restart{mp="/home/juicefs_mount",vol_name="myjuicefs"} 368
+juicefs_uptime{mp="/home/juicefs_mount",vol_name="myjuicefs"} 1246.457965465
+juicefs_used_buffer_size_bytes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 7.471104e+06
+juicefs_used_inodes{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
+juicefs_used_space{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
 ```
 
 # JuiceFS Benchmarks
