@@ -95,7 +95,7 @@ Following instructions for upgrading JuiceFS client [here](https://github.com/ju
 
 1. Unmounting the JuiceFS mount. If you setup using [systemd JuiceFS service file](#mount-the-juicefs-formatted-r2-s3-storage), then it's just a service stop for it and the [JuiceFS S3 Gateway service](#systemd-service-starting-juicefs-s3-gateway).
 
-Upgrading to [JuiceFS v1.0.0-rc1](https://github.com/juicedata/juicefs/releases/tag/v1.0.0-rc1):
+Upgrading to [JuiceFS v1.0.0](https://github.com/juicedata/juicefs/releases/tag/v1.0.0):
 
 ```
 systemctl stop juicefs.service juicefs-gateway.service
@@ -127,7 +127,7 @@ systemctl status juicefs.service juicefs-gateway.service
 
 ```
 juicefs -V
-juicefs version 1.0.0-rc1+2022-06-15.0c63cd8
+juicefs version 1.0.0+2022-08-08.cf0c269
 
 df -hT /home/juicefs_mount
 Filesystem        Type          Size  Used Avail Use% Mounted on
@@ -162,16 +162,16 @@ juicefs status sqlite3://myjuicefs.db
   "Sessions": [
     {
       "Sid": 19,
-      "Expire": "2022-06-21T13:55:43Z",
-      "Version": "1.0.0-rc1+2022-06-15.0c63cd8",
+      "Expire": "2022-08-12T12:58:32Z",
+      "Version": "1.0.0+2022-08-08.cf0c269",
       "HostName": "host.domain.com",
       "MountPoint": "/home/juicefs_mount",
       "ProcessID": 28376
     },
     {
       "Sid": 20,
-      "Expire": "2022-06-21T13:55:44Z",
-      "Version": "1.0.0-rc1+2022-06-15.0c63cd8",
+      "Expire": "2022-08-12T12:58:32Z",
+      "Version": "1.0.0+2022-08-08.cf0c269",
       "HostName": "host.domain.com",
       "MountPoint": "s3gateway",
       "ProcessID": 28387
