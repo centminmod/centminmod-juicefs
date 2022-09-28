@@ -263,7 +263,6 @@ juicefs mount sqlite3://myjuicefs.db /home/juicefs_mount \
 --cache-partial-only false \
 --free-space-ratio 0.1 \
 --writeback \
---backup-meta 1h \
 --no-usage-report \
 --max-uploads 10 \
 --max-deletes 2 \
