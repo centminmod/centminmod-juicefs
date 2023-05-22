@@ -752,6 +752,185 @@ juicefs_used_space{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
 
 # JuiceFS Benchmarks
 
+## On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1
+
+```
+juicefs bench -p 4 /home/juicefs_mount/                                  
+  Write big blocks count: 4096 / 4096 [===========================================================]  done      
+   Read big blocks count: 4096 / 4096 [===========================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1024 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 152.7 s, CPU: 23.1%, Memory: 1045.5 MiB
++------------------+------------------+---------------+
+|       ITEM       |       VALUE      |      COST     |
++------------------+------------------+---------------+
+|   Write big file |    1006.67 MiB/s |   4.07 s/file |
+|    Read big file |      28.05 MiB/s | 146.02 s/file |
+| Write small file |    770.3 files/s |  5.19 ms/file |
+|  Read small file |   8004.3 files/s |  0.50 ms/file |
+|        Stat file |  26278.8 files/s |  0.15 ms/file |
+|   FUSE operation | 73071 operations |   15.24 ms/op |
+|      Update meta |  7035 operations |    3.11 ms/op |
+|       Put object |  1049 operations | 1272.74 ms/op |
+|       Get object |  2012 operations |  538.12 ms/op |
+|    Delete object |     6 operations |  267.41 ms/op |
+| Write into cache |  1424 operations |   34.27 ms/op |
+|  Read from cache |   400 operations |    0.04 ms/op |
++------------------+------------------+---------------+
+```
+
+direct Cloudflare R2 storage object benchmark
+
+```
+juicefs objbench --storage s3 --access-key $cfaccesskey --secret-key $cfsecretkey https://${cfbucketname}.${cfaccountid}.r2.cloudflarestorage.com -p 1
+
+Start Functional Testing ...
++----------+---------------------+--------------------------------------------------+
+| CATEGORY |         TEST        |                      RESULT                      |
++----------+---------------------+--------------------------------------------------+
+|    basic |     create a bucket |                                             pass |
+|    basic |       put an object |                                             pass |
+|    basic |       get an object |                                             pass |
+|    basic |       get non-exist |                                             pass |
+|    basic |  get partial object | failed to get object with the offset out of r... |
+|    basic |      head an object |                                             pass |
+|    basic |    delete an object |                                             pass |
+|    basic |    delete non-exist |                                             pass |
+|    basic |        list objects |                 the result for list is incorrect |
+|    basic |         special key | list encode file failed SerializationError: f... |
+|     sync |    put a big object |                                             pass |
+|     sync | put an empty object |                                             pass |
+|     sync |    multipart upload |                                             pass |
+|     sync |  change owner/group |                                      not support |
+|     sync |   change permission |                                      not support |
+|     sync |        change mtime |                                      not support |
++----------+---------------------+--------------------------------------------------+
+
+Start Performance Testing ...
+2023/05/21 21:20:52.072515 juicefs[3620125] <ERROR>: The keys are out of order: marker "", last "19" current "1" [sync.go:132]
+2023/05/21 21:20:52.361774 juicefs[3620125] <ERROR>: The keys are out of order: marker "", last "19" current "1" [sync.go:132]
+
+2023/05/21 21:21:22.543272 juicefs[3620125] <ERROR>: The keys are out of order: marker "", last "19" current "1" [sync.go:132]
+put small objects count: 100 / 100 [==============================================================]  done      
+get small objects count: 100 / 100 [==============================================================]  done      
+   upload objects count: 256 / 256 [==============================================================]  done      
+ download objects count: 256 / 256 [==============================================================]  done      
+     list objects count: 100 / 100 [==============================================================]  done      
+     head objects count: 100 / 100 [==============================================================]  done      
+   delete objects count: 100 / 100 [==============================================================]  done      
+Benchmark finished! block-size: 4096 KiB, big-object-size: 1024 MiB, small-object-size: 128 KiB, small-objects: 100, NumThreads: 1
++--------------------+------------------+-------------------+
+|        ITEM        |       VALUE      |        COST       |
++--------------------+------------------+-------------------+
+|     upload objects |       3.26 MiB/s | 1228.16 ms/object |
+|   download objects |       4.22 MiB/s |  946.83 ms/object |
+|  put small objects |    1.3 objects/s |  768.52 ms/object |
+|  get small objects |    2.0 objects/s |  503.87 ms/object |
+|       list objects | 325.12 objects/s |      307.58 ms/op |
+|       head objects |    4.3 objects/s |  231.59 ms/object |
+|     delete objects |    3.5 objects/s |  283.57 ms/object |
+| change permissions |      not support |       not support |
+| change owner/group |      not support |       not support |
+|       update mtime |      not support |       not support |
++--------------------+------------------+-------------------+
+```
+
+### File copy tests
+
+Comparing JuiceFS mount with R2 storage `/home/juicefs_mount/` versus direct R2 storage bucket `s3://${cfbucketname_raw}` for read and writes.
+
+
+Writes tests
+
+```
+wget https://www.php.net/distributions/php-8.2.6.tar.gz
+
+ls -lah php-8.2.6.tar.gz
+-rw-r--r-- 1 root root 19M May  9 11:10 php-8.2.6.tar.gz
+
+1st run
+sync && echo 3 > /proc/sys/vm/drop_caches
+time \cp -f php-8.2.6.tar.gz  /home/juicefs_mount/
+
+real    0m0.040s
+user    0m0.001s
+sys     0m0.012s
+
+2nd run
+time \cp -f php-8.2.6.tar.gz  /home/juicefs_mount/
+
+real    0m0.024s
+user    0m0.000s
+sys     0m0.012s
+
+1st run
+sync && echo 3 > /proc/sys/vm/drop_caches
+time aws s3 cp --profile r2 --endpoint-url=$url php-8.2.6.tar.gz s3://${cfbucketname_raw}
+upload: ./php-8.2.6.tar.gz to s3://${cfbucketname_raw}/php-8.2.6.tar.gz      
+
+real    0m2.343s
+user    0m0.430s
+sys     0m0.082s
+
+2nd run
+time aws s3 cp --profile r2 --endpoint-url=$url php-8.2.6.tar.gz s3://${cfbucketname_raw}
+upload: ./php-8.2.6.tar.gz to s3://juicefs2/php-8.2.6.tar.gz      
+
+real    0m1.350s
+user    0m0.431s
+sys     0m0.058s
+```
+
+Read tests
+
+```
+1st run
+sync && echo 3 > /proc/sys/vm/drop_caches
+time \cp -f /home/juicefs_mount/php-8.2.6.tar.gz .
+
+real    0m2.334s
+user    0m0.001s
+sys     0m0.016s
+
+# 2nd run
+time \cp -f /home/juicefs_mount/php-8.2.6.tar.gz .
+
+real    0m0.025s
+user    0m0.000s
+sys     0m0.016s
+
+1st run
+sync && echo 3 > /proc/sys/vm/drop_caches
+time aws s3 cp --profile r2 --endpoint-url=$url s3://${cfbucketname_raw}/php-8.2.6.tar.gz .
+download: s3://${cfbucketname_raw}/php-8.2.6.tar.gz to ./php-8.2.6.tar.gz     
+
+real    0m1.449s
+user    0m0.432s
+sys     0m0.084s
+
+2nd run
+time aws s3 cp --profile r2 --endpoint-url=$url s3://${cfbucketname_raw}/php-8.2.6.tar.gz .
+download: s3://juicefs2/php-8.2.6.tar.gz to ./php-8.2.6.tar.gz   
+
+real    0m0.959s
+user    0m0.405s
+sys     0m0.075s
+```
+
+| Test | File Size/Time (MB/s) | Time (Seconds) |
+| ---- | --------------------- | -------------- |
+| **Write to JuiceFS (1st run)** | 19MB/0.040s = 475 MB/s | 0.040 |
+| **Write to JuiceFS (2nd run)** | 19MB/0.024s = 791.67 MB/s | 0.024 |
+| **Write to S3 (1st run)** | 19MB/2.343s = 8.11 MB/s | 2.343 |
+| **Write to S3 (2nd run)** | 19MB/1.350s = 14.07 MB/s | 1.350 |
+| **Read from JuiceFS (1st run)** | 19MB/2.334s = 8.14 MB/s | 2.334 |
+| **Read from JuiceFS (2nd run)** | 19MB/0.025s = 760 MB/s | 0.025 |
+| **Read from S3 (1st run)** | 19MB/1.449s = 13.11 MB/s | 1.449 |
+| **Read from S3 (2nd run)** | 19MB/0.959s = 19.81 MB/s | 0.959 |
+
 ## On Intel Core i7 4790K 4C/8T, 32GB memory and 2x 240GB SSD raid 1
 
 ```
