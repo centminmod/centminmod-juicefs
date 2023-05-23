@@ -265,14 +265,14 @@ juicefs mount sqlite3:///home/juicefs/myjuicefs.db /home/juicefs_mount \
 --free-space-ratio 0.1 \
 --writeback \
 --no-usage-report \
---max-uploads 10 \
---max-deletes 2 \
+--max-uploads 20 \
+--max-deletes 10 \
 --backup-meta 1h \
 --log /var/log/juicefs.log \
 --get-timeout 300 \
 --put-timeout 900 \
 --io-retries 90 \
---prefetch 4 -d
+--prefetch 1 -d
 ```
 
 ## systemd service Mount
@@ -304,14 +304,14 @@ ExecStart=/usr/local/bin/juicefs mount \
   --dir-entry-cache 1 \
   --cache-partial-only false \
   --free-space-ratio 0.1 \
-  --max-uploads 10 \
-  --max-deletes 2 \
+  --max-uploads 20 \
+  --max-deletes 10 \
   --backup-meta 1h \
   --log /var/log/juicefs.log \
   --get-timeout 300 \
   --put-timeout 900 \
   --io-retries 90 \
-  --prefetch 4
+  --prefetch 1
 
 ExecStop=/usr/local/bin/juicefs umount /home/juicefs_mount
 Restart=always
@@ -349,7 +349,7 @@ systemctl status juicefs | sed -e "s|$(hostname)|hostname|g"
     Tasks: 17
    Memory: 18.7M
    CGroup: /system.slice/juicefs.service
-           └─26947 /usr/local/bin/juicefs mount sqlite3:///home/juicefs/myjuicefs.db /home/juicefs_mount --no-usage-report --writeback --cache-size 102400 --cache-dir /home/juicefs_cache --free-space-ratio 0.1 --max-uploads 10 --max-deletes 2 --backup-meta 1h --log /var/log/juicefs.log -                                                                                  
+           └─26947 /usr/local/bin/juicefs mount sqlite3:///home/juicefs/myjuicefs.db /home/juicefs_mount --no-usage-report --writeback --cache-size 102400 --cache-dir /home/juicefs_cache --free-space-ratio 0.1 --max-uploads 20 --max-deletes 10 --backup-meta 1h --log /var/log/juicefs.log -                                                                                  
 
 May 25 04:26:33 hostname systemd[1]: Started JuiceFS.
 May 25 04:26:33 hostname juicefs[26947]: 2022/05/25 04:26:33.125185 juicefs[26947] <INFO>: Meta address: sqlite3:///home/juicefs/myjuicefs.db [interface.go:385]
@@ -497,8 +497,8 @@ ExecStart=/usr/local/bin/juicefs gateway \
   --dir-entry-cache 1 \
   --prefetch 1 \
   --free-space-ratio 0.1 \
-  --max-uploads 10 \
-  --max-deletes 2 \
+  --max-uploads 20 \
+  --max-deletes 10 \
   --backup-meta 1h \
   --get-timeout 300 \
   --put-timeout 900 \
@@ -539,7 +539,7 @@ systemctl status juicefs-gateway | sed -e "s|$(hostname)|hostname|g"
     Tasks: 13
    Memory: 18.3M
    CGroup: /system.slice/juicefs-gateway.service
-           └─26957 /usr/local/bin/juicefs gateway --no-usage-report --writeback --cache-size 102400 --cache-dir /home/juicefs_cache --free-space-ratio 0.1 --max-uploads 10 --max-deletes 2 --backup-meta 1h --get-timeout 300 --put-timeout 900 --io-retries 90 --prefetch 4 --bu                                                    
+           └─26957 /usr/local/bin/juicefs gateway --no-usage-report --writeback --cache-size 102400 --cache-dir /home/juicefs_cache --free-space-ratio 0.1 --max-uploads 20 --max-deletes 10 --backup-meta 1h --get-timeout 300 --put-timeout 900 --io-retries 90 --prefetch 1 --bu                                                    
 
 May 25 04:26:33 hostname juicefs[26957]: 2022/05/25 04:26:33.159004 juicefs[26957] <INFO>: Prometheus metrics listening on 127.0.0.1:10037 [mount.go:157]
 May 25 04:26:33 hostname juicefs[26957]: Endpoint: http://localhost:3777
@@ -751,6 +751,451 @@ juicefs_used_space{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
 ```
 
 # JuiceFS Benchmarks
+
+## On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1
+
+Cloudflare R2 buckets are not yet geographically dispersed like Amazon AWS S3 and only operate in some geographical regions so performance of Cloudflare R2 and thuse JuiceFS can be impacted. 
+
+For example, R2 created with location hint North American East versus R2 created on Dallas located dedicated server where Cloudflare automatically determines where R2 bucket gets created and their differences.
+
+For JuiceFS mounted storage at `/home/juicefs_mount/`
+
+| ITEM | VALUE (North American East) | COST (North American East) | VALUE (Server Location) | COST (Server Location) |
+| --- | --- | --- | --- | --- |
+| Write big file | 1374.08 MiB/s | 2.98 s/file | 973.94 MiB/s | 4.21 s/file |
+| Read big file | 152.23 MiB/s | 26.91 s/file | 66.39 MiB/s | 61.69 s/file |
+| Write small file | 780.3 files/s | 5.13 ms/file | 783.3 files/s | 5.11 ms/file |
+| Read small file | 8000.9 files/s | 0.50 ms/file | 5335.7 files/s | 0.75 ms/file |
+| Stat file | 27902.2 files/s | 0.14 ms/file | 22921.0 files/s | 0.17 ms/file |
+| FUSE operation | 71649 operations | 3.06 ms/op | 72092 operations | 6.83 ms/op |
+| Update meta | 6057 operations | 2.50 ms/op | 6213 operations | 3.92 ms/op |
+| Put object | 1106 operations | 547.32 ms/op | 1065 operations | 1207.74 ms/op |
+| Get object | 1030 operations | 301.80 ms/op | 1077 operations | 785.13 ms/op |
+| Delete object | 29 operations | 234.02 ms/op | 27 operations | 250.50 ms/op |
+| Write into cache | 1424 operations | 12.91 ms/op | 1424 operations | 18.18 ms/op |
+| Read from cache | 400 operations | 0.04 ms/op | 400 operations | 0.05 ms/op |
+
+For direct R2 object storage benchmarks without cache acceleration of JuiceFS
+
+| ITEM | VALUE (North American East) | COST (North American East) | VALUE (Server Location) | COST (Server Location) |
+| --- | --- | --- | --- | --- |
+| Upload objects | 7.56 MiB/s | 528.88 ms/object | 3.26 MiB/s | 1228.16 ms/object |
+| Download objects | 12.41 MiB/s | 322.35 ms/object | 4.22 MiB/s | 946.83 ms/object |
+| Put small objects | 2.6 objects/s | 390.11 ms/object | 1.3 objects/s | 768.52 ms/object |
+| Get small objects | 5.8 objects/s | 171.27 ms/object | 2.0 objects/s | 503.87 ms/object |
+| List objects | 873.36 objects/s | 114.50 ms/op | 325.12 objects/s | 307.58 ms/op |
+| Head objects | 13.4 objects/s | 74.84 ms/object | 4.3 objects/s | 231.59 ms/object |
+| Delete objects | 4.3 objects/s | 230.17 ms/object | 3.5 objects/s | 283.57 ms/object |
+| Change permissions | Not supported | Not supported | Not supported | Not supported |
+| Change owner/group | Not supported | Not supported | Not supported | Not supported |
+| Update mtime | Not supported | Not supported | Not supported | Not supported |
+
+### with R2 bucket created with location hint North American East
+
+with R2 bucket created on Cloudflare dashboard with location hint North American East
+
+```
+juicefs bench -p 4 /home/juicefs_mount/                                  
+  Write big blocks count: 4096 / 4096 [===========================================================]  done      
+   Read big blocks count: 4096 / 4096 [===========================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1024 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 32.4 s, CPU: 97.4%, Memory: 527.6 MiB
++------------------+------------------+--------------+
+|       ITEM       |       VALUE      |     COST     |
++------------------+------------------+--------------+
+|   Write big file |    1374.08 MiB/s |  2.98 s/file |
+|    Read big file |     152.23 MiB/s | 26.91 s/file |
+| Write small file |    780.3 files/s | 5.13 ms/file |
+|  Read small file |   8000.9 files/s | 0.50 ms/file |
+|        Stat file |  27902.2 files/s | 0.14 ms/file |
+|   FUSE operation | 71649 operations |   3.06 ms/op |
+|      Update meta |  6057 operations |   2.50 ms/op |
+|       Put object |  1106 operations | 547.32 ms/op |
+|       Get object |  1030 operations | 301.80 ms/op |
+|    Delete object |    29 operations | 234.02 ms/op |
+| Write into cache |  1424 operations |  12.91 ms/op |
+|  Read from cache |   400 operations |   0.04 ms/op |
++------------------+------------------+--------------+
+```
+
+direct Cloudflare R2 storage object benchmark with location hint North American East
+
+```
+juicefs objbench --storage s3 --access-key $cfaccesskey --secret-key $cfsecretkey https://${cfbucketname}.${cfaccountid}.r2.cloudflarestorage.com -p 1
+Start Functional Testing ...
++----------+---------------------+--------------------------------------------------+
+| CATEGORY |         TEST        |                      RESULT                      |
++----------+---------------------+--------------------------------------------------+
+|    basic |     create a bucket |                                             pass |
+|    basic |       put an object |                                             pass |
+|    basic |       get an object |                                             pass |
+|    basic |       get non-exist |                                             pass |
+|    basic |  get partial object | failed to get object with the offset out of r... |
+|    basic |      head an object |                                             pass |
+|    basic |    delete an object |                                             pass |
+|    basic |    delete non-exist |                                             pass |
+|    basic |        list objects |                 the result for list is incorrect |
+|    basic |         special key | list encode file failed SerializationError: f... |
+|     sync |    put a big object |                                             pass |
+|     sync | put an empty object |                                             pass |
+|     sync |    multipart upload |                                             pass |
+|     sync |  change owner/group |                                      not support |
+|     sync |   change permission |                                      not support |
+|     sync |        change mtime |                                      not support |
++----------+---------------------+--------------------------------------------------+
+
+Start Performance Testing ...
+2023/05/23 04:38:31.529817 juicefs[3658965] <ERROR>: The keys are out of order: marker "", last "19" current "1" [sync.go:132]
+2023/05/23 04:38:31.641211 juicefs[3658965] <ERROR>: The keys are out of order: marker "", last "19" current "1" [sync.go:132]
+2023/05/23 04:38:42.854394 juicefs[3658965] <ERROR>: The keys are out of order: marker "", last "19" current "1" [sync.go:132]
+put small objects count: 100 / 100 [==============================================================]  done      
+get small objects count: 100 / 100 [==============================================================]  done      
+   upload objects count: 256 / 256 [==============================================================]  done      
+ download objects count: 256 / 256 [==============================================================]  done      
+     list objects count: 100 / 100 [==============================================================]  done      
+     head objects count: 100 / 100 [==============================================================]  done      
+   delete objects count: 100 / 100 [==============================================================]  done      
+Benchmark finished! block-size: 4096 KiB, big-object-size: 1024 MiB, small-object-size: 128 KiB, small-objects: 100, NumThreads: 1
++--------------------+------------------+------------------+
+|        ITEM        |       VALUE      |       COST       |
++--------------------+------------------+------------------+
+|     upload objects |       7.56 MiB/s | 528.88 ms/object |
+|   download objects |      12.41 MiB/s | 322.35 ms/object |
+|  put small objects |    2.6 objects/s | 390.11 ms/object |
+|  get small objects |    5.8 objects/s | 171.27 ms/object |
+|       list objects | 873.36 objects/s |     114.50 ms/op |
+|       head objects |   13.4 objects/s |  74.84 ms/object |
+|     delete objects |    4.3 objects/s | 230.17 ms/object |
+| change permissions |      not support |      not support |
+| change owner/group |      not support |      not support |
+|       update mtime |      not support |      not support |
++--------------------+------------------+------------------+
+```
+
+### with R2 bucket created with location hint North American West
+
+with R2 bucket created on Cloudflare dashboard with location hint North American West
+
+```
+juicefs bench -p 4 /home/juicefs_mount/                                  
+  Write big blocks count: 4096 / 4096 [===========================================================]  done      
+   Read big blocks count: 4096 / 4096 [===========================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1024 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 44.1 s, CPU: 70.9%, Memory: 646.6 MiB
++------------------+------------------+--------------+
+|       ITEM       |       VALUE      |     COST     |
++------------------+------------------+--------------+
+|   Write big file |    1382.61 MiB/s |  2.96 s/file |
+|    Read big file |     106.13 MiB/s | 38.60 s/file |
+| Write small file |    742.0 files/s | 5.39 ms/file |
+|  Read small file |   5259.6 files/s | 0.76 ms/file |
+|        Stat file |  25240.3 files/s | 0.16 ms/file |
+|   FUSE operation | 71790 operations |   4.33 ms/op |
+|      Update meta |  6123 operations |   2.24 ms/op |
+|       Put object |  1072 operations | 787.82 ms/op |
+|       Get object |  1057 operations | 320.67 ms/op |
+|    Delete object |    10 operations | 426.32 ms/op |
+| Write into cache |  1424 operations |  16.86 ms/op |
+|  Read from cache |   400 operations |   0.05 ms/op |
++------------------+------------------+--------------+
+```
+
+### with R2 bucket created on server
+
+with R2 bucket created on server, the R2 location is automatically chosen by Cloudflare
+
+```
+juicefs bench -p 4 /home/juicefs_mount/
+  Write big blocks count: 4096 / 4096 [===========================================================]  done      
+   Read big blocks count: 4096 / 4096 [===========================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1024 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 68.4 s, CPU: 48.6%, Memory: 557.8 MiB
++------------------+------------------+---------------+
+|       ITEM       |       VALUE      |      COST     |
++------------------+------------------+---------------+
+|   Write big file |     973.94 MiB/s |   4.21 s/file |
+|    Read big file |      66.39 MiB/s |  61.69 s/file |
+| Write small file |    783.3 files/s |  5.11 ms/file |
+|  Read small file |   5335.7 files/s |  0.75 ms/file |
+|        Stat file |  22921.0 files/s |  0.17 ms/file |
+|   FUSE operation | 72092 operations |    6.83 ms/op |
+|      Update meta |  6213 operations |    3.92 ms/op |
+|       Put object |  1065 operations | 1207.74 ms/op |
+|       Get object |  1077 operations |  785.13 ms/op |
+|    Delete object |    27 operations |  250.50 ms/op |
+| Write into cache |  1424 operations |   18.18 ms/op |
+|  Read from cache |   400 operations |    0.05 ms/op |
++------------------+------------------+---------------+
+```
+
+direct Cloudflare R2 storage object benchmark with R2 location is automatically chosen by Cloudflare
+
+```
+juicefs objbench --storage s3 --access-key $cfaccesskey --secret-key $cfsecretkey https://${cfbucketname}.${cfaccountid}.r2.cloudflarestorage.com -p 1
+
+Start Functional Testing ...
++----------+---------------------+--------------------------------------------------+
+| CATEGORY |         TEST        |                      RESULT                      |
++----------+---------------------+--------------------------------------------------+
+|    basic |     create a bucket |                                             pass |
+|    basic |       put an object |                                             pass |
+|    basic |       get an object |                                             pass |
+|    basic |       get non-exist |                                             pass |
+|    basic |  get partial object | failed to get object with the offset out of r... |
+|    basic |      head an object |                                             pass |
+|    basic |    delete an object |                                             pass |
+|    basic |    delete non-exist |                                             pass |
+|    basic |        list objects |                 the result for list is incorrect |
+|    basic |         special key | list encode file failed SerializationError: f... |
+|     sync |    put a big object |                                             pass |
+|     sync | put an empty object |                                             pass |
+|     sync |    multipart upload |                                             pass |
+|     sync |  change owner/group |                                      not support |
+|     sync |   change permission |                                      not support |
+|     sync |        change mtime |                                      not support |
++----------+---------------------+--------------------------------------------------+
+
+Start Performance Testing ...
+2023/05/21 21:20:52.072515 juicefs[3620125] <ERROR>: The keys are out of order: marker "", last "19" current "1" [sync.go:132]
+2023/05/21 21:20:52.361774 juicefs[3620125] <ERROR>: The keys are out of order: marker "", last "19" current "1" [sync.go:132]
+
+2023/05/21 21:21:22.543272 juicefs[3620125] <ERROR>: The keys are out of order: marker "", last "19" current "1" [sync.go:132]
+put small objects count: 100 / 100 [==============================================================]  done      
+get small objects count: 100 / 100 [==============================================================]  done      
+   upload objects count: 256 / 256 [==============================================================]  done      
+ download objects count: 256 / 256 [==============================================================]  done      
+     list objects count: 100 / 100 [==============================================================]  done      
+     head objects count: 100 / 100 [==============================================================]  done      
+   delete objects count: 100 / 100 [==============================================================]  done      
+Benchmark finished! block-size: 4096 KiB, big-object-size: 1024 MiB, small-object-size: 128 KiB, small-objects: 100, NumThreads: 1
++--------------------+------------------+-------------------+
+|        ITEM        |       VALUE      |        COST       |
++--------------------+------------------+-------------------+
+|     upload objects |       3.26 MiB/s | 1228.16 ms/object |
+|   download objects |       4.22 MiB/s |  946.83 ms/object |
+|  put small objects |    1.3 objects/s |  768.52 ms/object |
+|  get small objects |    2.0 objects/s |  503.87 ms/object |
+|       list objects | 325.12 objects/s |      307.58 ms/op |
+|       head objects |    4.3 objects/s |  231.59 ms/object |
+|     delete objects |    3.5 objects/s |  283.57 ms/object |
+| change permissions |      not support |       not support |
+| change owner/group |      not support |       not support |
+|       update mtime |      not support |       not support |
++--------------------+------------------+-------------------+
+```
+
+### File copy tests
+
+Comparing JuiceFS mount with R2 storage `/home/juicefs_mount/` versus direct R2 storage bucket `s3://${cfbucketname_raw}` for read and writes.
+
+
+Writes tests
+
+```
+wget https://www.php.net/distributions/php-8.2.6.tar.gz
+
+ls -lah php-8.2.6.tar.gz
+-rw-r--r-- 1 root root 19M May  9 11:10 php-8.2.6.tar.gz
+
+1st run
+sync && echo 3 > /proc/sys/vm/drop_caches
+time \cp -f php-8.2.6.tar.gz  /home/juicefs_mount/
+
+real    0m0.040s
+user    0m0.001s
+sys     0m0.012s
+
+2nd run
+time \cp -f php-8.2.6.tar.gz  /home/juicefs_mount/
+
+real    0m0.024s
+user    0m0.000s
+sys     0m0.012s
+
+1st run
+sync && echo 3 > /proc/sys/vm/drop_caches
+time aws s3 cp --profile r2 --endpoint-url=$url php-8.2.6.tar.gz s3://${cfbucketname_raw}
+upload: ./php-8.2.6.tar.gz to s3://${cfbucketname_raw}/php-8.2.6.tar.gz      
+
+real    0m2.343s
+user    0m0.430s
+sys     0m0.082s
+
+2nd run
+time aws s3 cp --profile r2 --endpoint-url=$url php-8.2.6.tar.gz s3://${cfbucketname_raw}
+upload: ./php-8.2.6.tar.gz to s3://${cfbucketname_raw}/php-8.2.6.tar.gz      
+
+real    0m1.350s
+user    0m0.431s
+sys     0m0.058s
+```
+
+Read tests
+
+```
+1st run
+sync && echo 3 > /proc/sys/vm/drop_caches
+time \cp -f /home/juicefs_mount/php-8.2.6.tar.gz .
+
+real    0m2.334s
+user    0m0.001s
+sys     0m0.016s
+
+# 2nd run
+time \cp -f /home/juicefs_mount/php-8.2.6.tar.gz .
+
+real    0m0.025s
+user    0m0.000s
+sys     0m0.016s
+
+1st run
+sync && echo 3 > /proc/sys/vm/drop_caches
+time aws s3 cp --profile r2 --endpoint-url=$url s3://${cfbucketname_raw}/php-8.2.6.tar.gz .
+download: s3://${cfbucketname_raw}/php-8.2.6.tar.gz to ./php-8.2.6.tar.gz     
+
+real    0m1.449s
+user    0m0.432s
+sys     0m0.084s
+
+2nd run
+time aws s3 cp --profile r2 --endpoint-url=$url s3://${cfbucketname_raw}/php-8.2.6.tar.gz .
+download: s3://${cfbucketname_raw}/php-8.2.6.tar.gz to ./php-8.2.6.tar.gz   
+
+real    0m0.959s
+user    0m0.405s
+sys     0m0.075s
+```
+
+| Test | File Size/Time (MB/s) | Time (Seconds) |
+| ---- | --------------------- | -------------- |
+| **Write to JuiceFS mounted S3 (1st run)** | 19MB/0.040s = 475 MB/s | 0.040 |
+| **Write to JuiceFS mounted S3 (2nd run)** | 19MB/0.024s = 791.67 MB/s | 0.024 |
+| **Write to S3 (1st run)** | 19MB/2.343s = 8.11 MB/s | 2.343 |
+| **Write to S3 (2nd run)** | 19MB/1.350s = 14.07 MB/s | 1.350 |
+| **Read from JuiceFS mounted S3 (1st run)** | 19MB/2.334s = 8.14 MB/s | 2.334 |
+| **Read from JuiceFS mounted S3 (2nd run)** | 19MB/0.025s = 760 MB/s | 0.025 |
+| **Read from S3 (1st run)** | 19MB/1.449s = 13.11 MB/s | 1.449 |
+| **Read from S3 (2nd run)** | 19MB/0.959s = 19.81 MB/s | 0.959 |
+
+### fio test for E-2276G server
+
+Pre-warmed up cache directory fio test
+
+```
+ls -lah /home/juicefs_mount/fio
+total 4.1G
+drwxr-xr-x 2 root root 4.0K May 21 22:38 .
+drwxrwxrwx 3 root root 4.0K May 21 22:37 ..
+-rw-r--r-- 1 root root 1.0G May 21 22:38 sequential-read.0.0
+-rw-r--r-- 1 root root 1.0G May 21 22:38 sequential-read.1.0
+-rw-r--r-- 1 root root 1.0G May 21 22:38 sequential-read.2.0
+-rw-r--r-- 1 root root 1.0G May 21 22:38 sequential-read.3.0
+```
+```
+juicefs warmup -p 4 /home/juicefs_mount/fio
+Warming up count: 4                             0.02/s        
+Warming up bytes: 4.00 GiB (4294967296 Bytes)   16.59 MiB/s   
+2023/05/21 22:47:02.773883 juicefs[3622249] <INFO>: Successfully warmed up 4 files (4294967296 bytes) [warmup.go:233]
+```
+```
+fio --name=sequential-read --directory=/home/juicefs_mount/fio --rw=read --refill_buffers --bs=4M --size=1G --numjobs=4
+sequential-read: (g=0): rw=read, bs=(R) 4096KiB-4096KiB, (W) 4096KiB-4096KiB, (T) 4096KiB-4096KiB, ioengine=psync, iodepth=1
+...
+fio-3.19
+Starting 4 processes
+Jobs: 3 (f=3): [_(1),R(3)][-.-%][r=2291MiB/s][r=572 IOPS][eta 00m:00s]
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3622348: Sun May 21 22:47:28 2023
+  read: IOPS=135, BW=542MiB/s (568MB/s)(1024MiB/1890msec)
+    clat (usec): min=4835, max=13800, avg=7004.83, stdev=1154.13
+     lat (usec): min=4836, max=13801, avg=7006.45, stdev=1154.05
+    clat percentiles (usec):
+     |  1.00th=[ 5080],  5.00th=[ 5473], 10.00th=[ 5735], 20.00th=[ 6063],
+     | 30.00th=[ 6390], 40.00th=[ 6587], 50.00th=[ 6849], 60.00th=[ 7111],
+     | 70.00th=[ 7439], 80.00th=[ 7832], 90.00th=[ 8356], 95.00th=[ 8979],
+     | 99.00th=[11076], 99.50th=[11731], 99.90th=[13829], 99.95th=[13829],
+     | 99.99th=[13829]
+   bw (  KiB/s): min=493799, max=589824, per=25.20%, avg=553928.67, stdev=52399.21, samples=3
+   iops        : min=  120, max=  144, avg=135.00, stdev=13.08, samples=3
+  lat (msec)   : 10=98.83%, 20=1.17%
+  cpu          : usr=0.64%, sys=64.69%, ctx=3015, majf=0, minf=1036
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3622349: Sun May 21 22:47:28 2023
+  read: IOPS=134, BW=538MiB/s (564MB/s)(1024MiB/1905msec)
+    clat (usec): min=3199, max=11916, avg=7060.50, stdev=1274.27
+     lat (usec): min=3199, max=11916, avg=7062.11, stdev=1274.34
+    clat percentiles (usec):
+     |  1.00th=[ 3687],  5.00th=[ 5407], 10.00th=[ 5669], 20.00th=[ 6128],
+     | 30.00th=[ 6456], 40.00th=[ 6718], 50.00th=[ 6980], 60.00th=[ 7242],
+     | 70.00th=[ 7504], 80.00th=[ 7832], 90.00th=[ 8455], 95.00th=[ 9110],
+     | 99.00th=[11600], 99.50th=[11731], 99.90th=[11863], 99.95th=[11863],
+     | 99.99th=[11863]
+   bw (  KiB/s): min=481137, max=581632, per=24.88%, avg=546977.33, stdev=57045.78, samples=3
+   iops        : min=  117, max=  142, avg=133.33, stdev=14.15, samples=3
+  lat (msec)   : 4=1.17%, 10=95.70%, 20=3.12%
+  cpu          : usr=0.84%, sys=64.29%, ctx=2994, majf=0, minf=1036
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3622350: Sun May 21 22:47:28 2023
+  read: IOPS=134, BW=538MiB/s (564MB/s)(1024MiB/1905msec)
+    clat (usec): min=3188, max=15334, avg=7060.55, stdev=1465.48
+     lat (usec): min=3189, max=15337, avg=7062.32, stdev=1465.47
+    clat percentiles (usec):
+     |  1.00th=[ 3523],  5.00th=[ 5211], 10.00th=[ 5669], 20.00th=[ 6063],
+     | 30.00th=[ 6390], 40.00th=[ 6652], 50.00th=[ 6849], 60.00th=[ 7177],
+     | 70.00th=[ 7439], 80.00th=[ 7832], 90.00th=[ 8455], 95.00th=[ 9765],
+     | 99.00th=[12518], 99.50th=[13042], 99.90th=[15270], 99.95th=[15270],
+     | 99.99th=[15270]
+   bw (  KiB/s): min=468476, max=594449, per=24.69%, avg=542724.33, stdev=65937.74, samples=3
+   iops        : min=  114, max=  145, avg=132.33, stdev=16.26, samples=3
+  lat (msec)   : 4=1.17%, 10=94.14%, 20=4.69%
+  cpu          : usr=0.53%, sys=64.29%, ctx=2892, majf=0, minf=1036
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3622351: Sun May 21 22:47:28 2023
+  read: IOPS=134, BW=537MiB/s (563MB/s)(1024MiB/1908msec)
+    clat (usec): min=1314, max=18340, avg=7077.81, stdev=1606.56
+     lat (usec): min=1314, max=18341, avg=7079.39, stdev=1606.52
+    clat percentiles (usec):
+     |  1.00th=[ 2507],  5.00th=[ 5211], 10.00th=[ 5669], 20.00th=[ 6128],
+     | 30.00th=[ 6259], 40.00th=[ 6652], 50.00th=[ 6980], 60.00th=[ 7308],
+     | 70.00th=[ 7570], 80.00th=[ 7963], 90.00th=[ 8586], 95.00th=[ 9503],
+     | 99.00th=[11994], 99.50th=[12518], 99.90th=[18220], 99.95th=[18220],
+     | 99.99th=[18220]
+   bw (  KiB/s): min=474806, max=573440, per=24.54%, avg=539421.67, stdev=55984.95, samples=3
+   iops        : min=  115, max=  140, avg=131.33, stdev=14.15, samples=3
+  lat (msec)   : 2=0.78%, 4=1.95%, 10=93.75%, 20=3.52%
+  cpu          : usr=0.63%, sys=63.56%, ctx=2996, majf=0, minf=1036
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+   READ: bw=2147MiB/s (2251MB/s), 537MiB/s-542MiB/s (563MB/s-568MB/s), io=4096MiB (4295MB), run=1890-1908msec
+```
 
 ## On Intel Core i7 4790K 4C/8T, 32GB memory and 2x 240GB SSD raid 1
 
