@@ -878,7 +878,7 @@ Benchmark finished! block-size: 4096 KiB, big-object-size: 1024 MiB, small-objec
 
 ### with R2 bucket created with location hint North American West
 
-with R2 bucket created on Cloudflare dashboard with location hint North American West
+with R2 bucket created on Cloudflare dashboard with location hint North American West and default 1024MB big file.
 
 ```
 juicefs bench -p 4 /home/juicefs_mount/                                  
@@ -906,6 +906,36 @@ Time used: 44.1 s, CPU: 70.9%, Memory: 646.6 MiB
 | Write into cache |  1424 operations |  16.86 ms/op |
 |  Read from cache |   400 operations |   0.05 ms/op |
 +------------------+------------------+--------------+
+```
+
+with R2 bucket created on Cloudflare dashboard with location hint North American West and default 1MB big file.
+
+```
+juicefs bench -p 4 /home/juicefs_mount/ --big-file-size 1
+  Write big blocks count: 4 / 4 [==============================================================]  done      
+   Read big blocks count: 4 / 4 [==============================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 1.7 s, CPU: 102.6%, Memory: 154.9 MiB
++------------------+-----------------+--------------+
+|       ITEM       |      VALUE      |     COST     |
++------------------+-----------------+--------------+
+|   Write big file |    230.82 MiB/s |  0.02 s/file |
+|    Read big file |   1276.38 MiB/s |  0.00 s/file |
+| Write small file |   675.7 files/s | 5.92 ms/file |
+|  Read small file |  7833.1 files/s | 0.51 ms/file |
+|        Stat file | 28226.1 files/s | 0.14 ms/file |
+|   FUSE operation | 5756 operations |   0.41 ms/op |
+|      Update meta | 5770 operations |   0.70 ms/op |
+|       Put object |  118 operations | 242.35 ms/op |
+|       Get object |    0 operations |   0.00 ms/op |
+|    Delete object |   95 operations |  83.94 ms/op |
+| Write into cache |  404 operations |   0.14 ms/op |
+|  Read from cache |  408 operations |   0.06 ms/op |
++------------------+-----------------+--------------+
 ```
 
 ### with R2 bucket created on server
