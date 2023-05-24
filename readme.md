@@ -20,6 +20,14 @@ JuiceFS implements an architecture that seperates "data" and "metadata" storage.
   * [Warmup Local Cache](#warmup-local-cache)
   * [Check Disk Size](#check-disk-size)
 * [JuiceFS Benchmarks](#juicefs-benchmarks)
+  * [On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](https://github.com/centminmod/centminmod-juicefs#on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
+    * [with R2 bucket created with location hint North American East](#with-r2-bucket-created-with-location-hint-north-american-east)
+    * [with R2 bucket created with location hint North American West](#with-r2-bucket-created-with-location-hint-north-american-west)
+    * [with R2 bucket created on server](#with-r2-bucket-created-on-server)
+      * [File copy tests](#file-copy-tests)
+      * [fio test for E-2276G server](#fio-test-for-e-2276g-server)
+  * [On Intel Core i7 4790K 4C/8T, 32GB memory and 2x 240GB SSD raid 1](#on-intel-core-i7-4790k-4c8t-32gb-memory-and-2x-240gb-ssd-raid-1)
+    * [fio tests](#fio-test)
 * [Destroying JuiceFS Filesystem](#destroying-juicefs-filesystem)
 
 # Install JuiceFS binary
