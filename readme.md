@@ -4,6 +4,16 @@ Installing [JuiceFS](https://juicefs.com/docs/community/introduction/) high perf
 
 JuiceFS implements an architecture that seperates "data" and "metadata" storage. When using JuiceFS to store data, the data itself is persisted in [object storage](https://juicefs.com/docs/community/how_to_setup_object_storage/) (e.g., Amazon S3, OpenStack Swift, Ceph, Azure Blob or MinIO), and the corresponding metadata can be persisted in various databases ([Metadata Engines](https://juicefs.com/docs/community/databases_for_metadata/)) such as Redis, Amazon MemoryDB, MariaDB, MySQL, TiKV, etcd, SQLite, KeyDB, PostgreSQL, BadgerDB, or FoundationDB.
 
+From https://juicefs.com/en/blog/usage-tips/juicefs-24-qas-for-beginners
+
+**How is the performance of JuiceFS?**
+
+JuiceFS is a distributed file system. The latency of metadata is determined by 1 to 2 network round trip(s) between the mount point and metadata service (generally 1-3 ms), and the latency of data depends on the object storage latency (generally 20-100ms). The throughput of sequential read and write can reachup to 2800 MiB/s (see Benchmark with fio), depending on the network bandwidth and whether the data can be easily compressed.
+
+JuiceFS has a built-in multi-level cache (invalidated automatically). Once the cache is warmed up, latency and throughput can be very close to a local file system (although the use of FUSE may bring a small amount of overhead).
+
+# Table Of Contents
+
 * [Install JuiceFS binary](#install-juicefs-binary)
 * [Upgrade JuiceFS binary](#upgrade-juicefs-binary)
 * [Setup JuiceFS logrotation](#setup-juicefs-logrotation)
