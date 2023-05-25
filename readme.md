@@ -773,7 +773,7 @@ juicefs_used_space{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
 
 ## Sharded R2 Mount On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1
 
-The server runs on 2x mismatched 960GB NVMe drives in raid 1 so bare in my the potential peak read and write performance of the resulting benchmarks:
+The server runs on 2x mismatched 960GB NVMe drives in raid 1 so take note of that for the potential peak read and write performance of the resulting benchmarks:
 
 * Samsung SSD PM983 960GB 2.5 U.2 Gen 3.0 x4 PCIe NVMe
   * Up to 3,000MB/s Read, 1,050MB/s Write
