@@ -786,6 +786,129 @@ The server runs on 2x mismatched 960GB NVMe drives in raid 1 so take note of tha
   * 1681 TBW (1 DWPD/5yrs) (1.6 DWPD/3yrs)
   * Power: Idle: 6.30W Average read: 6.21W Average write: 11.40W Max read: 6.60W Max write: 12.24W
 
+The table below shows comparison between 10x Cloudflare R2 sharded JuiceFS mount vs 5x Cloudflare R2 sharded JuiceFS mount vs 1x Cloudflare JuiceFS mount (default). All R2 storage locations are with location hint North American East.
+
+For 1024MB big file size
+
+| ITEM | VALUE (10x R2 Sharded) | COST (10x R2 Sharded) | VALUE (5x R2 Sharded) | COST (5x R2 Sharded) | VALUE (1x R2 Default) | COST (1x R2 Default) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Write big file | 906.04 MiB/s | 4.52 s/file | 960.47 MiB/s | 4.26 s/file | 1374.08 MiB/s | 2.98 s/file |
+| Read big file | 223.19 MiB/s | 18.35 s/file | 174.17 MiB/s | 23.52 s/file | 152.23 MiB/s | 26.91 s/file |
+| Write small file | 701.2 files/s | 5.70 ms/file | 777.4 files/s | 5.15 ms/file | 780.3 files/s | 5.13 ms/file |
+| Read small file | 6378.3 files/s | 0.63 ms/file | 7940.0 files/s | 0.50 ms/file | 8000.9 files/s | 0.50 ms/file |
+| Stat file | 21123.7 files/s | 0.19 ms/file | 29344.7 files/s | 0.14 ms/file | 27902.2 files/s | 0.14 ms/file |
+| FUSE operation | 71555 operations | 2.16 ms/op | 71597 operations | 2.67 ms/op | 71649 operations | 3.06 ms/op |
+| Update meta | 6271 operations | 9.01 ms/op | 6041 operations | 4.09 ms/op | 6057 operations | 2.50 ms/op |
+| Put object | 1152 operations | 403.23 ms/op | 1136 operations | 428.27 ms/op | 1106 operations | 547.32 ms/op |
+| Get object | 1034 operations | 278.61 ms/op | 1049 operations | 299.50 ms/op | 1030 operations | 301.80 ms/op |
+| Delete object | 316 operations | 124.32 ms/op | 60 operations | 120.73 ms/op | 29 operations | 234.02 ms/op |
+| Write into cache | 1424 operations | 24.92 ms/op | 1424 operations | 83.12 ms/op | 1424 operations | 12.91 ms/op |
+| Read from cache | 400 operations | 0.05 ms/op | 400 operations | 0.05 ms/op | 400 operations | 0.04 ms/op |
+
+For 1MB big file size
+
+| ITEM | VALUE (10x R2 Sharded) | COST (10x R2 Sharded) | VALUE (5x R2 Sharded) | COST (5x R2 Sharded) | VALUE (1x R2 Default) | COST (1x R2 Default) |
+| --- | --- | --- | --- | --- | --- | --- |
+| Write big file | 452.66 MiB/s | 0.01 s/file | 448.20 MiB/s | 0.01 s/file | 230.82 MiB/s | 0.02 s/file |
+| Read big file | 1545.95 MiB/s | 0.00 s/file | 1376.38 MiB/s | 0.00 s/file | 1276.38 MiB/s | 0.00 s/file |
+| Write small file | 682.8 files/s | 5.86 ms/file | 792.5 files/s | 5.05 ms/file | 675.7 files/s | 5.92 ms/file |
+| Read small file | 6299.4 files/s | 0.63 ms/file | 7827.1 files/s | 0.51 ms/file | 7833.1 files/s | 0.51 ms/file |
+| Stat file | 21365.2 files/s | 0.19 ms/file | 24308.1 files/s | 0.16 ms/file | 28226.1 files/s | 0.14 ms/file |
+| FUSE operation | 5757 operations | 0.42 ms/op | 5750 operations | 0.38 ms/op | 5756 operations | 0.41 ms/op |
+| Update meta | 5814 operations | 0.72 ms/op | 5740 operations | 0.74 ms/op | 5770 operations | 0.70 ms/op |
+| Put object | 107 operations | 282.68 ms/op | 94 operations | 286.35 ms/op | 118 operations | 242.35 ms/op |
+| Get object | 0 operations | 0.00 ms/op | 0 operations | 0.00 ms/op | 0 operations | 0.00 ms/op |
+| Delete object | 133 operations | 116.84 ms/op | 59 operations | 117.93 ms/op | 95 operations | 83.94 ms/op |
+| Write into cache | 404 operations | 0.12 ms/op | 404 operations | 0.12 ms/op | 404 operations | 0.14 ms/op |
+| Read from cache | 408 operations | 0.06 ms/op | 408 operations | 0.05 ms/op | 408 operations | 0.06 ms/op |
+
+
+### 10x R2 Sharded JuiceFS Mount
+
+Benchmark with [`--shard`](https://juicefs.com/docs/community/how_to_setup_object_storage#enable-data-sharding) mount option for [sharded Cloudflare R2 mounted JuiceFS](https://juicefs.com/docs/community/how_to_setup_object_storage#enable-data-sharding) over 10x sharded R2 object storage locations - `juicefs-shard-0`,`juicefs-shard-`,`juicefs-shard-1`,`juicefs-shard-3`, `juicefs-shard-4`, `juicefs-shard-5`, `juicefs-shard-6`, `juicefs-shard-7`, `juicefs-shard-8`, `juicefs-shard-9` with location hint North American East.
+
+```
+cfaccountid='CF_ACCOUNT_ID'
+cfaccesskey=''
+cfsecretkey=''
+cfbucketname='juicefs-shard'
+
+mkdir -p /home/juicefs
+cd /home/juicefs
+
+juicefs format --storage s3 \
+    --shards 10 \
+    --bucket https://${cfbucketname}-%d.${cfaccountid}.r2.cloudflarestorage.com \
+    --access-key $cfaccesskey \
+    --secret-key $cfsecretkey \
+    --compress none \
+    --trash-days 0 \
+    --block-size 4096 \
+    sqlite3:///home/juicefs/myjuicefs.db myjuicefs
+```
+
+JuiceFS 10x sharded Cloudflare R2 benchmark with location hint North American East and 1024MB big file size.
+
+```
+juicefs bench -p 4 /home/juicefs_mount/
+  Write big blocks count: 4096 / 4096 [===========================================================]  done      
+   Read big blocks count: 4096 / 4096 [===========================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1024 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 25.4 s, CPU: 127.8%, Memory: 1742.7 MiB
++------------------+------------------+--------------+
+|       ITEM       |       VALUE      |     COST     |
++------------------+------------------+--------------+
+|   Write big file |     906.04 MiB/s |  4.52 s/file |
+|    Read big file |     223.19 MiB/s | 18.35 s/file |
+| Write small file |    701.2 files/s | 5.70 ms/file |
+|  Read small file |   6378.3 files/s | 0.63 ms/file |
+|        Stat file |  21123.7 files/s | 0.19 ms/file |
+|   FUSE operation | 71555 operations |   2.16 ms/op |
+|      Update meta |  6271 operations |   9.01 ms/op |
+|       Put object |  1152 operations | 403.23 ms/op |
+|       Get object |  1034 operations | 278.61 ms/op |
+|    Delete object |   316 operations | 124.32 ms/op |
+| Write into cache |  1424 operations |  24.92 ms/op |
+|  Read from cache |   400 operations |   0.05 ms/op |
++------------------+------------------+--------------+
+```
+
+JuiceFS 10x sharded Cloudflare R2 benchmark with location hint North American East and 1MB big file size.
+
+```
+juicefs bench -p 4 /home/juicefs_mount/ --big-file-size 1
+  Write big blocks count: 4 / 4 [==============================================================]  done      
+   Read big blocks count: 4 / 4 [==============================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 1.7 s, CPU: 97.8%, Memory: 1946.3 MiB
++------------------+-----------------+--------------+
+|       ITEM       |      VALUE      |     COST     |
++------------------+-----------------+--------------+
+|   Write big file |    452.66 MiB/s |  0.01 s/file |
+|    Read big file |   1545.95 MiB/s |  0.00 s/file |
+| Write small file |   682.8 files/s | 5.86 ms/file |
+|  Read small file |  6299.4 files/s | 0.63 ms/file |
+|        Stat file | 21365.2 files/s | 0.19 ms/file |
+|   FUSE operation | 5757 operations |   0.42 ms/op |
+|      Update meta | 5814 operations |   0.72 ms/op |
+|       Put object |  107 operations | 282.68 ms/op |
+|       Get object |    0 operations |   0.00 ms/op |
+|    Delete object |  133 operations | 116.84 ms/op |
+| Write into cache |  404 operations |   0.12 ms/op |
+|  Read from cache |  408 operations |   0.06 ms/op |
++------------------+-----------------+--------------+
+```
+
+### 5x R2 Sharded JuiceFS Mount
+
 Benchmark with [`--shard`](https://juicefs.com/docs/community/how_to_setup_object_storage#enable-data-sharding) mount option for [sharded Cloudflare R2 mounted JuiceFS](https://juicefs.com/docs/community/how_to_setup_object_storage#enable-data-sharding) over 5x sharded R2 object storage locations - `juicefs-shard-0`,`juicefs-shard-`,`juicefs-shard-1`,`juicefs-shard-3`, and `juicefs-shard-4` with location hint North American East.
 
 ```
@@ -845,7 +968,7 @@ juicefs info /home/juicefs_mount/
    path: /
 ```
 
-JuiceFS sharded Cloudflare R2 benchmark with location hint North American East and 1024MB big file size.
+JuiceFS 5x sharded Cloudflare R2 benchmark with location hint North American East and 1024MB big file size.
 
 ```
 juicefs bench -p 4 /home/juicefs_mount/
