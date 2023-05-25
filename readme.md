@@ -1099,6 +1099,18 @@ drwxrwxrwx 3 root root 4.0K May 24 19:01 ..
 -rw-r--r-- 1 root root 1.0G May 24 19:01 sequential-write.0.0
 ```
 
+Checking the S3 Gateway
+
+```
+aws --endpoint-url http://localhost:3777 s3 ls --recursive myjuicefs
+
+2023-05-24 19:08:04 1073741824 fio/sequential-read.0.0
+2023-05-24 19:08:09 1073741824 fio/sequential-read.1.0
+2023-05-24 19:08:07 1073741824 fio/sequential-read.2.0
+2023-05-24 19:08:05 1073741824 fio/sequential-read.3.0
+2023-05-24 19:01:24 1073741824 fio/sequential-write.0.0
+```
+
 ## On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1
 
 Cloudflare R2 buckets are not yet geographically dispersed like Amazon AWS S3 and only operate in some geographical regions so performance of Cloudflare R2 and thuse JuiceFS can be impacted. 
