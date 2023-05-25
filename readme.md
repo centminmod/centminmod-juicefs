@@ -909,6 +909,107 @@ Time used: 1.7 s, CPU: 97.8%, Memory: 1946.3 MiB
 +------------------+-----------------+--------------+
 ```
 
+Inspecting actual JuiceFS mount
+
+```
+ls -lah /home/juicefs_mount
+total 9.5K
+drwxrwxrwx   2 root root 4.0K May 24 21:09 .
+drwxr-xr-x. 13 root root 4.0K May 21 18:58 ..
+-r--------   1 root root    0 May 24 21:04 .accesslog
+-r--------   1 root root 1.3K May 24 21:04 .config
+-r--r--r--   1 root root    0 May 24 21:04 .stats
+dr-xr-xr-x   2 root root    0 May 24 21:04 .trash
+
+```
+
+JuiceFS mount stats
+
+```
+cat /home/juicefs_mount/.stats 
+juicefs_blockcache_blocks 0
+juicefs_blockcache_bytes 0
+juicefs_blockcache_drops 0
+juicefs_blockcache_evicts 0
+juicefs_blockcache_hit_bytes 436207616
+juicefs_blockcache_hits 3232
+juicefs_blockcache_miss 4241
+juicefs_blockcache_miss_bytes 17720934400
+juicefs_blockcache_read_hist_seconds_total 3232
+juicefs_blockcache_read_hist_seconds_sum 0.16809886599999965
+juicefs_blockcache_write_bytes 17616076800
+juicefs_blockcache_write_hist_seconds_total 7312
+juicefs_blockcache_write_hist_seconds_sum 391.8615498160001
+juicefs_blockcache_writes 7312
+juicefs_compact_size_histogram_bytes_total 0
+juicefs_compact_size_histogram_bytes_sum 0
+juicefs_cpu_usage 141.95404200000002
+juicefs_fuse_open_handlers 1
+juicefs_fuse_ops_durations_histogram_seconds_total 310446
+juicefs_fuse_ops_durations_histogram_seconds_sum 897.3332114739511
+juicefs_fuse_read_size_bytes_total 134400
+juicefs_fuse_read_size_bytes_sum 17616076800
+juicefs_fuse_written_size_bytes_total 134400
+juicefs_fuse_written_size_bytes_sum 17616076800
+juicefs_go_build_info__github.com/juicedata/juicefs_(devel) 1
+juicefs_go_goroutines 79
+juicefs_go_info_go1.19.2 1
+juicefs_go_memstats_alloc_bytes 32336136
+juicefs_go_memstats_alloc_bytes_total 2939952080
+juicefs_go_memstats_buck_hash_sys_bytes 1805266
+juicefs_go_memstats_frees_total 35324415
+juicefs_go_memstats_gc_cpu_fraction 0.000014170426577562373
+juicefs_go_memstats_gc_sys_bytes 84006704
+juicefs_go_memstats_heap_alloc_bytes 32336136
+juicefs_go_memstats_heap_idle_bytes 1917329408
+juicefs_go_memstats_heap_inuse_bytes 37642240
+juicefs_go_memstats_heap_objects 61603
+juicefs_go_memstats_heap_released_bytes 1916534784
+juicefs_go_memstats_heap_sys_bytes 1954971648
+juicefs_go_memstats_last_gc_time_seconds 1684981564.030393
+juicefs_go_memstats_lookups_total 0
+juicefs_go_memstats_mallocs_total 35386018
+juicefs_go_memstats_mcache_inuse_bytes 14400
+juicefs_go_memstats_mcache_sys_bytes 15600
+juicefs_go_memstats_mspan_inuse_bytes 357136
+juicefs_go_memstats_mspan_sys_bytes 10918080
+juicefs_go_memstats_next_gc_bytes 64394520
+juicefs_go_memstats_other_sys_bytes 2965030
+juicefs_go_memstats_stack_inuse_bytes 12156928
+juicefs_go_memstats_stack_sys_bytes 12156928
+juicefs_go_memstats_sys_bytes 2066839256
+juicefs_go_threads 278
+juicefs_memory 154210304
+juicefs_meta_ops_durations_histogram_seconds_total 33621
+juicefs_meta_ops_durations_histogram_seconds_sum 304.82784600500264
+juicefs_object_request_data_bytes_GET 17234395136
+juicefs_object_request_data_bytes_PUT 17573871616
+juicefs_object_request_durations_histogram_seconds_DELETE_total 7312
+juicefs_object_request_durations_histogram_seconds_DELETE_sum 894.7742219350012
+juicefs_object_request_durations_histogram_seconds_GET_total 4225
+juicefs_object_request_durations_histogram_seconds_GET_sum 1226.6492657670003
+juicefs_object_request_durations_histogram_seconds_PUT_total 6866
+juicefs_object_request_durations_histogram_seconds_PUT_sum 2722.8829050600116
+juicefs_object_request_errors 499
+juicefs_process_cpu_seconds_total 141.95
+juicefs_process_max_fds 524288
+juicefs_process_open_fds 15
+juicefs_process_resident_memory_bytes 154210304
+juicefs_process_start_time_seconds 1684980243.38
+juicefs_process_virtual_memory_bytes 2880843776
+juicefs_process_virtual_memory_max_bytes 18446744073709552000
+juicefs_staging_block_bytes 0
+juicefs_staging_blocks 0
+juicefs_store_cache_size_bytes 0
+juicefs_transaction_durations_histogram_seconds_total 51442
+juicefs_transaction_durations_histogram_seconds_sum 140.4373622320012
+juicefs_transaction_restart 0
+juicefs_uptime 1416.787316108
+juicefs_used_buffer_size_bytes 8388608
+juicefs_used_inodes 0
+juicefs_used_space 0
+```
+
 ### 5x R2 Sharded JuiceFS Mount
 
 Benchmark with [`--shard`](https://juicefs.com/docs/community/how_to_setup_object_storage#enable-data-sharding) mount option for [sharded Cloudflare R2 mounted JuiceFS](https://juicefs.com/docs/community/how_to_setup_object_storage#enable-data-sharding) over 5x sharded R2 object storage locations - `juicefs-shard-0`,`juicefs-shard-`,`juicefs-shard-1`,`juicefs-shard-3`, and `juicefs-shard-4` with location hint North American East.
