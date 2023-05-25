@@ -31,6 +31,8 @@ JuiceFS has a built-in multi-level cache (invalidated automatically). Once the c
   * [Check Disk Size](#check-disk-size)
 * [JuiceFS Benchmarks](#juicefs-benchmarks)
   * [Sharded R2 Mount On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](#sharded-r2-mount-on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
+    * [10x Cloudflare R2 sharded JuiceFS mount](#10x-r2-sharded-juicefs-mount)
+    * [5x Cloudflare R2 sharded JuiceFS mount](#5x-r2-sharded-juicefs-mount)
   * [On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](#on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
     * [with R2 bucket created with location hint North American East](#with-r2-bucket-created-with-location-hint-north-american-east)
     * [with R2 bucket created with location hint North American West](#with-r2-bucket-created-with-location-hint-north-american-west)
@@ -786,7 +788,7 @@ The server runs on 2x mismatched 960GB NVMe drives in raid 1 so take note of tha
   * 1681 TBW (1 DWPD/5yrs) (1.6 DWPD/3yrs)
   * Power: Idle: 6.30W Average read: 6.21W Average write: 11.40W Max read: 6.60W Max write: 12.24W
 
-The table below shows comparison between 10x Cloudflare R2 sharded JuiceFS mount vs 5x Cloudflare R2 sharded JuiceFS mount vs 1x Cloudflare JuiceFS mount (default). All R2 storage locations are with location hint North American East.
+The table below shows comparison between [10x Cloudflare R2 sharded JuiceFS mount](#10x-r2-sharded-juicefs-mount) vs [5x Cloudflare R2 sharded JuiceFS mount](#5x-r2-sharded-juicefs-mount) vs [1x Cloudflare JuiceFS mount (default)](#on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1). All R2 storage locations are with location hint North American East.
 
 For 1024MB big file size
 
