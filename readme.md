@@ -2553,13 +2553,28 @@ Run status group 0 (all jobs):
 
 Need to get the metadata engine's UUID via jq JSON tool piped query and pass it to `juicefs destroy` command.
 
+
+For sqlite3 metadata cache setup
+
 ```
+juicefs rmr /home/juicefs_mount/fio
 uuid=$(juicefs status sqlite3:///home/juicefs/myjuicefs.db | jq -r '.Setting.UUID')
 systemctl stop juicefs.service juicefs-gateway.service
 echo y | juicefs destroy sqlite3:///home/juicefs/myjuicefs.db $uuid
 rm -rf /home/juicefs_cache/*
 rm -f /home/juicefs/myjuicefs.db
 ```
+
+For Redis metadata cache setup
+
+```
+juicefs rmr /home/juicefs_mount/fio
+uuid=$(juicefs status redis://:password@localhost:6479/1 | jq -r '.Setting.UUID')
+systemctl stop juicefs.service juicefs-gateway.service
+echo y | juicefs destroy redis://:password@localhost:6479/1 $uuid
+rm -rf /home/juicefs_cache/*
+```
+
 ```
 # remove Cloudflare R2 bucket meta data from bucket s://juicefs/myjuicefs
 aws s3 rm --recursive --profile r2 --endpoint-url=$url s3://$cfbucketname/myjuicefs
