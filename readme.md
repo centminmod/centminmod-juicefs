@@ -30,7 +30,8 @@ JuiceFS has a built-in multi-level cache (invalidated automatically). Once the c
   * [Warmup Local Cache](#warmup-local-cache)
   * [Check Disk Size](#check-disk-size)
 * [JuiceFS Benchmarks](#juicefs-benchmarks)
-  * [On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](https://github.com/centminmod/centminmod-juicefs#on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
+  * [Sharded R2 Mount On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](#sharded-r2-mount-on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
+  * [On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](#on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
     * [with R2 bucket created with location hint North American East](#with-r2-bucket-created-with-location-hint-north-american-east)
     * [with R2 bucket created with location hint North American West](#with-r2-bucket-created-with-location-hint-north-american-west)
     * [with R2 bucket created on server](#with-r2-bucket-created-on-server)
@@ -769,6 +770,334 @@ juicefs_used_space{mp="/home/juicefs_mount",vol_name="myjuicefs"} 0
 ```
 
 # JuiceFS Benchmarks
+
+## Sharded R2 Mount On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1
+
+The server runs on 2x mismatched 960GB NVMe drives in raid 1 so bare in my the potential peak read and write performance of the resulting benchmarks:
+
+* Samsung SSD PM983 960GB 2.5 U.2 Gen 3.0 x4 PCIe NVMe
+  * Up to 3,000MB/s Read, 1,050MB/s Write
+  * 4K random read/write 400,000/40,000 IOPS
+  * 1366 TBW / 1.3 DWPD
+  * Power: 4 Watt (idle) 8.6 Watt (read) 8.1 Watt (write)
+* Kingston DC1500M U.2 Enterprise SSD Gen 3.0 x4 PCIe NVME
+  * Up to 3,100MB/s Read, 1,700MB/s Write
+  * Steady-state 4k read/write 440,000/150,000 IOPS
+  * 1681 TBW (1 DWPD/5yrs) (1.6 DWPD/3yrs)
+  * Power: Idle: 6.30W Average read: 6.21W Average write: 11.40W Max read: 6.60W Max write: 12.24W
+
+Benchmark with [`--shard`](https://juicefs.com/docs/community/how_to_setup_object_storage#enable-data-sharding) mount option for [sharded Cloudflare R2 mounted JuiceFS](https://juicefs.com/docs/community/how_to_setup_object_storage#enable-data-sharding) over 5x sharded R2 object storage locations - `juicefs-shard-0`,`juicefs-shard-`,`juicefs-shard-1`,`juicefs-shard-3`, and `juicefs-shard-4` with location hint North American East.
+
+```
+cfaccountid='CF_ACCOUNT_ID'
+cfaccesskey=''
+cfsecretkey=''
+cfbucketname='juicefs-shard'
+
+mkdir -p /home/juicefs
+cd /home/juicefs
+
+juicefs format --storage s3 \
+    --shards 5 \
+    --bucket https://${cfbucketname}-%d.${cfaccountid}.r2.cloudflarestorage.com \
+    --access-key $cfaccesskey \
+    --secret-key $cfsecretkey \
+    --compress none \
+    --trash-days 0 \
+    --block-size 4096 \
+    sqlite3:///home/juicefs/myjuicefs.db myjuicefs
+```
+
+output
+
+```
+2023/05/24 17:45:14.116161 juicefs[3701895] <INFO>: Meta address: sqlite3:///home/juicefs/myjuicefs.db [interface.go:401]
+2023/05/24 17:45:14.117248 juicefs[3701895] <INFO>: Data use shard5://s3://juicefs-shard-0/myjuicefs/ [format.go:434]
+2023/05/24 17:45:18.423901 juicefs[3701895] <ERROR>: Can't list s3://juicefs-shard-0/: InvalidMaxKeys: MaxKeys params must be positive integer <= 1000.
+        status code: 400, request id: , host id:  [sharding.go:85]
+2023/05/24 17:45:18.423955 juicefs[3701895] <WARNING>: List storage shard5://s3://juicefs-shard-0/myjuicefs/ failed: list s3://juicefs-shard-0/: InvalidMaxKeys: MaxKeys params must be positive integer <= 1000.
+        status code: 400, request id: , host id:  [format.go:452]
+2023/05/24 17:45:18.709793 juicefs[3701895] <INFO>: Volume is formatted as {
+  "Name": "myjuicefs",
+  "UUID": "UUID-UUID-UUID-UUID",
+  "Storage": "s3",
+  "Bucket": "https://juicefs-shard-%d.CF_ACCOUNT_ID.r2.cloudflarestorage.com",
+  "AccessKey": "CF_ACCESS_KEY",
+  "SecretKey": "removed",
+  "BlockSize": 4096,
+  "Compression": "none",
+  "Shards": 5,
+  "KeyEncrypted": true,
+  "MetaVersion": 1
+} [format.go:471]
+```
+
+JuiceFS mount info
+
+```
+juicefs info /home/juicefs_mount/
+/home/juicefs_mount/ :
+  inode: 1
+  files: 0
+   dirs: 1
+ length: 0 Bytes
+   size: 4.00 KiB (4096 Bytes)
+   path: /
+```
+
+JuiceFS sharded Cloudflare R2 benchmark with location hint North American East and 1024MB big file size.
+
+```
+juicefs bench -p 4 /home/juicefs_mount/
+  Write big blocks count: 4096 / 4096 [===========================================================]  done      
+   Read big blocks count: 4096 / 4096 [===========================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1024 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 30.2 s, CPU: 103.5%, Memory: 1364.5 MiB
++------------------+------------------+--------------+
+|       ITEM       |       VALUE      |     COST     |
++------------------+------------------+--------------+
+|   Write big file |     960.47 MiB/s |  4.26 s/file |
+|    Read big file |     174.17 MiB/s | 23.52 s/file |
+| Write small file |    777.4 files/s | 5.15 ms/file |
+|  Read small file |   7940.0 files/s | 0.50 ms/file |
+|        Stat file |  29344.7 files/s | 0.14 ms/file |
+|   FUSE operation | 71597 operations |   2.67 ms/op |
+|      Update meta |  6041 operations |   4.09 ms/op |
+|       Put object |  1136 operations | 428.27 ms/op |
+|       Get object |  1049 operations | 299.50 ms/op |
+|    Delete object |    60 operations | 120.73 ms/op |
+| Write into cache |  1424 operations |  83.12 ms/op |
+|  Read from cache |   400 operations |   0.05 ms/op |
++------------------+------------------+--------------+
+```
+
+JuiceFS sharded Cloudflare R2 benchmark with location hint North American East and 1MB big file size.
+
+```
+juicefs bench -p 4 /home/juicefs_mount/ --big-file-size 1
+  Write big blocks count: 4 / 4 [==============================================================]  done      
+   Read big blocks count: 4 / 4 [==============================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 1.6 s, CPU: 102.4%, Memory: 164.9 MiB
++------------------+-----------------+--------------+
+|       ITEM       |      VALUE      |     COST     |
++------------------+-----------------+--------------+
+|   Write big file |    448.20 MiB/s |  0.01 s/file |
+|    Read big file |   1376.38 MiB/s |  0.00 s/file |
+| Write small file |   792.5 files/s | 5.05 ms/file |
+|  Read small file |  7827.1 files/s | 0.51 ms/file |
+|        Stat file | 24308.1 files/s | 0.16 ms/file |
+|   FUSE operation | 5750 operations |   0.38 ms/op |
+|      Update meta | 5740 operations |   0.74 ms/op |
+|       Put object |   94 operations | 286.35 ms/op |
+|       Get object |    0 operations |   0.00 ms/op |
+|    Delete object |   59 operations | 117.93 ms/op |
+| Write into cache |  404 operations |   0.12 ms/op |
+|  Read from cache |  408 operations |   0.05 ms/op |
++------------------+-----------------+--------------+
+```
+
+Inspecting Cloudflare R2 sharded storage buckets after JuiceFS benchmark run with location hint North American East
+
+```
+aws s3 ls --recursive --profile r2 --endpoint-url=$url s3://juicefs-shard-0
+2023-05-24 18:46:01     131072 myjuicefs/chunks/0/0/980_0_131072
+2023-05-24 18:46:03     131072 myjuicefs/chunks/0/1/1146_0_131072
+2023-05-24 18:46:30     131072 myjuicefs/chunks/0/1/1540_0_131072
+
+aws s3 ls --recursive --profile r2 --endpoint-url=$url s3://juicefs-shard-1
+2023-05-24 18:46:03     131072 myjuicefs/chunks/0/1/1154_0_131072
+2023-05-24 18:46:29     131072 myjuicefs/chunks/0/1/1386_0_131072
+2023-05-24 18:46:31     131072 myjuicefs/chunks/0/1/1688_0_131072
+2023-05-24 17:45:18         36 myjuicefs/juicefs_uuid
+
+aws s3 ls --recursive --profile r2 --endpoint-url=$url s3://juicefs-shard-2
+2023-05-24 17:52:09     131072 myjuicefs/chunks/0/0/574_0_131072
+2023-05-24 18:46:01     131072 myjuicefs/chunks/0/1/1000_0_131072
+2023-05-24 18:46:03     131072 myjuicefs/chunks/0/1/1142_0_131072
+
+aws s3 ls --recursive --profile r2 --endpoint-url=$url s3://juicefs-shard-3
+2023-05-24 18:46:03     131072 myjuicefs/chunks/0/1/1130_0_131072
+2023-05-24 18:46:03     131072 myjuicefs/chunks/0/1/1150_0_131072
+2023-05-24 18:46:05     131072 myjuicefs/chunks/0/1/1226_0_131072
+2023-05-24 18:46:28     131072 myjuicefs/chunks/0/1/1382_0_131072
+2023-05-24 18:46:30     131072 myjuicefs/chunks/0/1/1532_0_131072
+2023-05-24 18:46:30     131072 myjuicefs/chunks/0/1/1552_0_131072
+2023-05-24 18:46:31     131072 myjuicefs/chunks/0/1/1560_0_131072
+2023-05-24 18:46:30     131072 myjuicefs/chunks/0/1/1564_0_131072
+2023-05-24 18:46:31     131072 myjuicefs/chunks/0/1/1568_0_131072
+2023-05-24 18:46:32     131072 myjuicefs/chunks/0/1/1728_0_131072
+2023-05-24 17:53:44        581 myjuicefs/meta/dump-2023-05-24-225343.json.gz
+
+aws s3 ls --recursive --profile r2 --endpoint-url=$url s3://juicefs-shard-4
+2023-05-24 18:46:01     131072 myjuicefs/chunks/0/0/988_0_131072
+2023-05-24 18:46:03     131072 myjuicefs/chunks/0/1/1134_0_131072
+2023-05-24 18:46:03     131072 myjuicefs/chunks/0/1/1138_0_131072
+2023-05-24 18:46:28     131072 myjuicefs/chunks/0/1/1390_0_131072
+2023-05-24 18:46:28     131072 myjuicefs/chunks/0/1/1394_0_131072
+2023-05-24 18:46:30     131072 myjuicefs/chunks/0/1/1556_0_131072
+```
+
+### fio sharded Cloudflare R2 test for E-2276G server with location hint North American East
+
+fio Sequential Write
+```
+mkdir -p /home/juicefs_mount/fio
+
+fio --name=sequential-write --directory=/home/juicefs_mount/fio --rw=write --refill_buffers --bs=4M --size=1G --end_fsync=1
+sequential-write: (g=0): rw=write, bs=(R) 4096KiB-4096KiB, (W) 4096KiB-4096KiB, (T) 4096KiB-4096KiB, ioengine=psync, iodepth=1
+fio-3.19
+Starting 1 process
+sequential-write: Laying out IO file (1 file / 1024MiB)
+Jobs: 1 (f=1)
+sequential-write: (groupid=0, jobs=1): err= 0: pid=3704701: Wed May 24 19:01:25 2023
+  write: IOPS=279, BW=1119MiB/s (1173MB/s)(1024MiB/915msec); 0 zone resets
+    clat (usec): min=2221, max=7356, avg=2961.60, stdev=807.86
+     lat (usec): min=2222, max=7357, avg=2962.43, stdev=808.05
+    clat percentiles (usec):
+     |  1.00th=[ 2245],  5.00th=[ 2311], 10.00th=[ 2376], 20.00th=[ 2442],
+     | 30.00th=[ 2540], 40.00th=[ 2638], 50.00th=[ 2704], 60.00th=[ 2802],
+     | 70.00th=[ 2966], 80.00th=[ 3163], 90.00th=[ 4424], 95.00th=[ 4948],
+     | 99.00th=[ 5735], 99.50th=[ 6718], 99.90th=[ 7373], 99.95th=[ 7373],
+     | 99.99th=[ 7373]
+   bw (  MiB/s): min= 1067, max= 1067, per=95.35%, avg=1067.08, stdev= 0.00, samples=1
+   iops        : min=  266, max=  266, avg=266.00, stdev= 0.00, samples=1
+  lat (msec)   : 4=89.84%, 10=10.16%
+  cpu          : usr=16.19%, sys=38.95%, ctx=8195, majf=0, minf=9
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,256,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=1119MiB/s (1173MB/s), 1119MiB/s-1119MiB/s (1173MB/s-1173MB/s), io=1024MiB (1074MB), run=915-915msec
+```
+```
+ls -lah /home/juicefs_mount/fio
+total 1.1G
+drwxr-xr-x 2 root root 4.0K May 24 19:01 .
+drwxrwxrwx 3 root root 4.0K May 24 19:01 ..
+-rw-r--r-- 1 root root 1.0G May 24 19:01 sequential-write.0.0
+```
+```
+juicefs warmup -p 4 /home/juicefs_mount/fio                              
+Warming up count: 5                             0.06/s        
+Warming up bytes: 5.00 GiB (5368709120 Bytes)   57.32 MiB/s   
+2023/05/24 19:37:02.236625 juicefs[3705549] <INFO>: Successfully warmed up 5 files (5368709120 bytes) [warmup.go:233]
+```
+
+fio Sequential Read
+
+```
+fio --name=sequential-read --directory=/home/juicefs_mount/fio --rw=read --refill_buffers --bs=4M --size=1G --numjobs=4
+sequential-read: (g=0): rw=read, bs=(R) 4096KiB-4096KiB, (W) 4096KiB-4096KiB, (T) 4096KiB-4096KiB, ioengine=psync, iodepth=1
+...
+fio-3.19
+Starting 4 processes
+Jobs: 4 (f=4): [R(4)][-.-%][r=2270MiB/s][r=567 IOPS][eta 00m:00s]
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3705616: Wed May 24 19:37:25 2023
+  read: IOPS=132, BW=532MiB/s (557MB/s)(1024MiB/1926msec)
+    clat (usec): min=2368, max=15013, avg=7167.80, stdev=1697.61
+     lat (usec): min=2368, max=15013, avg=7169.52, stdev=1697.67
+    clat percentiles (usec):
+     |  1.00th=[ 2540],  5.00th=[ 5473], 10.00th=[ 5735], 20.00th=[ 6063],
+     | 30.00th=[ 6390], 40.00th=[ 6652], 50.00th=[ 6915], 60.00th=[ 7242],
+     | 70.00th=[ 7504], 80.00th=[ 7898], 90.00th=[ 9110], 95.00th=[10421],
+     | 99.00th=[13304], 99.50th=[13829], 99.90th=[15008], 99.95th=[15008],
+     | 99.99th=[15008]
+   bw (  KiB/s): min=457227, max=573440, per=24.57%, avg=534320.67, stdev=66767.53, samples=3
+   iops        : min=  111, max=  140, avg=130.00, stdev=16.46, samples=3
+  lat (msec)   : 4=2.34%, 10=92.19%, 20=5.47%
+  cpu          : usr=0.52%, sys=62.55%, ctx=3056, majf=0, minf=1036
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3705617: Wed May 24 19:37:25 2023
+  read: IOPS=132, BW=531MiB/s (557MB/s)(1024MiB/1929msec)
+    clat (usec): min=1536, max=18497, avg=7181.80, stdev=1753.73
+     lat (usec): min=1536, max=18500, avg=7183.40, stdev=1753.80
+    clat percentiles (usec):
+     |  1.00th=[ 2343],  5.00th=[ 5211], 10.00th=[ 5669], 20.00th=[ 6063],
+     | 30.00th=[ 6456], 40.00th=[ 6718], 50.00th=[ 7046], 60.00th=[ 7373],
+     | 70.00th=[ 7701], 80.00th=[ 8225], 90.00th=[ 8979], 95.00th=[10552],
+     | 99.00th=[12518], 99.50th=[12649], 99.90th=[18482], 99.95th=[18482],
+     | 99.99th=[18482]
+   bw (  KiB/s): min=450877, max=572295, per=24.23%, avg=526742.67, stdev=66141.94, samples=3
+   iops        : min=  110, max=  139, avg=128.33, stdev=15.95, samples=3
+  lat (msec)   : 2=0.78%, 4=2.34%, 10=91.41%, 20=5.47%
+  cpu          : usr=0.47%, sys=62.14%, ctx=3051, majf=0, minf=1037
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3705618: Wed May 24 19:37:25 2023
+  read: IOPS=133, BW=536MiB/s (562MB/s)(1024MiB/1911msec)
+    clat (usec): min=4751, max=13813, avg=7109.46, stdev=1330.79
+     lat (usec): min=4754, max=13815, avg=7111.26, stdev=1330.78
+    clat percentiles (usec):
+     |  1.00th=[ 5014],  5.00th=[ 5342], 10.00th=[ 5800], 20.00th=[ 6128],
+     | 30.00th=[ 6390], 40.00th=[ 6652], 50.00th=[ 6849], 60.00th=[ 7111],
+     | 70.00th=[ 7439], 80.00th=[ 7832], 90.00th=[ 8586], 95.00th=[ 9503],
+     | 99.00th=[12125], 99.50th=[12518], 99.90th=[13829], 99.95th=[13829],
+     | 99.99th=[13829]
+   bw (  KiB/s): min=476279, max=589824, per=25.24%, avg=548858.00, stdev=63028.99, samples=3
+   iops        : min=  116, max=  144, avg=133.67, stdev=15.37, samples=3
+  lat (msec)   : 10=96.48%, 20=3.52%
+  cpu          : usr=0.63%, sys=64.08%, ctx=3023, majf=0, minf=1036
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3705619: Wed May 24 19:37:25 2023
+  read: IOPS=134, BW=536MiB/s (562MB/s)(1024MiB/1910msec)
+    clat (usec): min=4812, max=13160, avg=7107.62, stdev=1252.07
+     lat (usec): min=4814, max=13163, avg=7109.17, stdev=1252.09
+    clat percentiles (usec):
+     |  1.00th=[ 4883],  5.00th=[ 5473], 10.00th=[ 5669], 20.00th=[ 6063],
+     | 30.00th=[ 6456], 40.00th=[ 6652], 50.00th=[ 6980], 60.00th=[ 7242],
+     | 70.00th=[ 7635], 80.00th=[ 7963], 90.00th=[ 8586], 95.00th=[ 9503],
+     | 99.00th=[11469], 99.50th=[11731], 99.90th=[13173], 99.95th=[13173],
+     | 99.99th=[13173]
+   bw (  KiB/s): min=476279, max=598016, per=25.24%, avg=548863.33, stdev=64161.96, samples=3
+   iops        : min=  116, max=  146, avg=133.67, stdev=15.70, samples=3
+  lat (msec)   : 10=96.88%, 20=3.12%
+  cpu          : usr=0.31%, sys=63.75%, ctx=3115, majf=0, minf=1036
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+   READ: bw=2123MiB/s (2227MB/s), 531MiB/s-536MiB/s (557MB/s-562MB/s), io=4096MiB (4295MB), run=1910-1929msec
+```
+
+directory fio test
+
+```
+ls -lah /home/juicefs_mount/fio
+total 5.1G
+drwxr-xr-x 2 root root 4.0K May 24 19:08 .
+drwxrwxrwx 3 root root 4.0K May 24 19:01 ..
+-rw-r--r-- 1 root root 1.0G May 24 19:08 sequential-read.0.0
+-rw-r--r-- 1 root root 1.0G May 24 19:08 sequential-read.1.0
+-rw-r--r-- 1 root root 1.0G May 24 19:08 sequential-read.2.0
+-rw-r--r-- 1 root root 1.0G May 24 19:08 sequential-read.3.0
+-rw-r--r-- 1 root root 1.0G May 24 19:01 sequential-write.0.0
+```
 
 ## On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1
 
