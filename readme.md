@@ -275,7 +275,7 @@ mkdir -p /home/juicefs_mount /home/juicefs_cache
 
 There are additional JuiceFS mounting options outlined at https://juicefs.com/docs/community/command_reference#options-1
 
-Manually mount the R2 S3 storage at `/home/juicefs_mount`
+Manually mount the R2 S3 storage at `/home/juicefs_mount`. Note for Cloudflare R2, you need to [disable automatica metadata backups](https://juicefs.com/docs/community/how_to_setup_object_storage/#r2) with `--backup-meta 0`. Otherwise, for non-R2 S3 providers, you can set `--backup-meta 1h`.
 
 ```
 juicefs mount sqlite3:///home/juicefs/myjuicefs.db /home/juicefs_mount \
@@ -292,7 +292,7 @@ juicefs mount sqlite3:///home/juicefs/myjuicefs.db /home/juicefs_mount \
 --no-usage-report \
 --max-uploads 20 \
 --max-deletes 10 \
---backup-meta 1h \
+--backup-meta 0 \
 --log /var/log/juicefs.log \
 --get-timeout 300 \
 --put-timeout 900 \
@@ -331,7 +331,7 @@ ExecStart=/usr/local/bin/juicefs mount \
   --free-space-ratio 0.1 \
   --max-uploads 20 \
   --max-deletes 10 \
-  --backup-meta 1h \
+  --backup-meta 0 \
   --log /var/log/juicefs.log \
   --get-timeout 300 \
   --put-timeout 900 \
@@ -374,7 +374,7 @@ systemctl status juicefs | sed -e "s|$(hostname)|hostname|g"
     Tasks: 17
    Memory: 18.7M
    CGroup: /system.slice/juicefs.service
-           └─26947 /usr/local/bin/juicefs mount sqlite3:///home/juicefs/myjuicefs.db /home/juicefs_mount --no-usage-report --writeback --cache-size 102400 --cache-dir /home/juicefs_cache --free-space-ratio 0.1 --max-uploads 20 --max-deletes 10 --backup-meta 1h --log /var/log/juicefs.log -                                                                                  
+           └─26947 /usr/local/bin/juicefs mount sqlite3:///home/juicefs/myjuicefs.db /home/juicefs_mount --no-usage-report --writeback --cache-size 102400 --cache-dir /home/juicefs_cache --free-space-ratio 0.1 --max-uploads 20 --max-deletes 10 --backup-meta 0 --log /var/log/juicefs.log -                                                                                  
 
 May 25 04:26:33 hostname systemd[1]: Started JuiceFS.
 May 25 04:26:33 hostname juicefs[26947]: 2022/05/25 04:26:33.125185 juicefs[26947] <INFO>: Meta address: sqlite3:///home/juicefs/myjuicefs.db [interface.go:385]
@@ -456,7 +456,7 @@ juicefs
 
 ## Manually Starting JuiceFS S3 Gateway
 
-Manually starting created JuiceFS S3 Gateway
+Manually starting created JuiceFS S3 Gateway. Note for Cloudflare R2, you need to [disable automatica metadata backups](https://juicefs.com/docs/community/how_to_setup_object_storage/#r2) with `--backup-meta 0`. Otherwise, for non-R2 S3 providers, you can set `--backup-meta 1h`.
 
 Private local access only:
 
@@ -471,7 +471,7 @@ juicefs gateway \
 --prefetch 1 \
 --free-space-ratio 0.1 \
 --writeback \
---backup-meta 1h \
+--backup-meta 0 \
 --no-usage-report \
 --buffer-size 2048 sqlite3:///home/juicefs/myjuicefs.db localhost:3777
 ```
@@ -489,7 +489,7 @@ juicefs gateway \
 --prefetch 1 \
 --free-space-ratio 0.1 \
 --writeback \
---backup-meta 1h \
+--backup-meta 0 \
 --no-usage-report \
 --buffer-size 2048 sqlite3:///home/juicefs/myjuicefs.db 0.0.0.0:3777
 ```
@@ -524,7 +524,7 @@ ExecStart=/usr/local/bin/juicefs gateway \
   --free-space-ratio 0.1 \
   --max-uploads 20 \
   --max-deletes 10 \
-  --backup-meta 1h \
+  --backup-meta 0 \
   --get-timeout 300 \
   --put-timeout 900 \
   --io-retries 90 \
@@ -564,7 +564,7 @@ systemctl status juicefs-gateway | sed -e "s|$(hostname)|hostname|g"
     Tasks: 13
    Memory: 18.3M
    CGroup: /system.slice/juicefs-gateway.service
-           └─26957 /usr/local/bin/juicefs gateway --no-usage-report --writeback --cache-size 102400 --cache-dir /home/juicefs_cache --free-space-ratio 0.1 --max-uploads 20 --max-deletes 10 --backup-meta 1h --get-timeout 300 --put-timeout 900 --io-retries 90 --prefetch 1 --bu                                                    
+           └─26957 /usr/local/bin/juicefs gateway --no-usage-report --writeback --cache-size 102400 --cache-dir /home/juicefs_cache --free-space-ratio 0.1 --max-uploads 20 --max-deletes 10 --backup-meta 0 --get-timeout 300 --put-timeout 900 --io-retries 90 --prefetch 1 --bu                                                    
 
 May 25 04:26:33 hostname juicefs[26957]: 2022/05/25 04:26:33.159004 juicefs[26957] <INFO>: Prometheus metrics listening on 127.0.0.1:10037 [mount.go:157]
 May 25 04:26:33 hostname juicefs[26957]: Endpoint: http://localhost:3777
@@ -1557,7 +1557,7 @@ Outputs
 } [format.go:471]
 ```
 
-Edit `/usr/lib/systemd/system/juicefs.service`
+Edit `/usr/lib/systemd/system/juicefs.service`. Note for Cloudflare R2, you need to [disable automatica metadata backups](https://juicefs.com/docs/community/how_to_setup_object_storage/#r2) with `--backup-meta 0`. Otherwise, for non-R2 S3 providers, you can set `--backup-meta 1h`.
 
 ```                        
 [Unit]
@@ -1584,7 +1584,7 @@ ExecStart=/usr/local/bin/juicefs mount \
   --free-space-ratio 0.1 \
   --max-uploads 20 \
   --max-deletes 10 \
-  --backup-meta 1h \
+  --backup-meta 0 \
   --log /var/log/juicefs.log \
   --get-timeout 300 \
   --put-timeout 900 \
@@ -1623,7 +1623,7 @@ ExecStart=/usr/local/bin/juicefs gateway \
   --free-space-ratio 0.1 \
   --max-uploads 20 \
   --max-deletes 10 \
-  --backup-meta 1h \
+  --backup-meta 0 \
   --get-timeout 300 \
   --put-timeout 900 \
   --io-retries 90 \
@@ -1668,7 +1668,7 @@ juicefs format --storage s3 \
     redis://:password@localhost:6479/1 myjuicefs
 ```
 
-Edit `/usr/lib/systemd/system/juicefs.service` raise `--max-uploads 20` and `--max-deletes 10` values to `--max-uploads 30` and `--max-deletes 30`
+Edit `/usr/lib/systemd/system/juicefs.service` raise `--max-uploads 20` and `--max-deletes 10` values to `--max-uploads 30` and `--max-deletes 30`. Note for Cloudflare R2, you need to [disable automatica metadata backups](https://juicefs.com/docs/community/how_to_setup_object_storage/#r2) with `--backup-meta 0`. Otherwise, for non-R2 S3 providers, you can set `--backup-meta 1h`.
 
 ```
 [Unit]
@@ -1695,7 +1695,7 @@ ExecStart=/usr/local/bin/juicefs mount \
   --free-space-ratio 0.1 \
   --max-uploads 30 \
   --max-deletes 30 \
-  --backup-meta 1h \
+  --backup-meta 0 \
   --log /var/log/juicefs.log \
   --get-timeout 300 \
   --put-timeout 900 \
@@ -2959,7 +2959,7 @@ Run status group 0 (all jobs):
 
 # Destroying JuiceFS Filesystem
 
-Need to get the metadata engine's UUID via jq JSON tool piped query and pass it to `juicefs destroy` command.
+Need to get the metadata engine's UUID via jq JSON tool piped query and pass it to `juicefs destroy` command. Note for Cloudflare R2, the [`destroy`](https://juicefs.com/docs/community/how_to_setup_object_storage/#r2) command might not work 100%.
 
 
 For sqlite3 metadata cache setup
