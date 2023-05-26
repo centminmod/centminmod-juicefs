@@ -3046,7 +3046,7 @@ Examples:
 
 ## backup-juicefs-metadata.sh Example Backup
 
-The backup script uses [`juicefs dump`](https://juicefs.com/docs/community/metadata_dump_load#recovery-and-migration) command to backup the JuiceFS mount's metadata.
+The backup script uses [`juicefs dump`](https://juicefs.com/docs/community/metadata_dump_load#recovery-and-migration) command to backup the JuiceFS mount's metadata. You can edit script's backup directory variable `BACKUP_DIR="/home/juicefs_metadata_backups"` to your desired location. Ideally, backup to JuiceFS mount path i.e. `BACKUP_DIR="/home/juicefs_mount/juicefs_metadata_backups"`
 
 ```
 ./backup-juicefs-metadata.sh redis://:password@localhost:6479/1
@@ -3057,20 +3057,28 @@ The backup script uses [`juicefs dump`](https://juicefs.com/docs/community/metad
 2023/05/26 07:52:14.360591 juicefs[3792668] <INFO>: Ping redis: 21.753µs [redis.go:2904]
 2023/05/26 07:52:14.360826 juicefs[3792668] <WARNING>: Secret key is removed for the sake of safety [redis.go:3236]
 Dumped entries count: 0 / 0 [--------------------------------------------------------------]  done      
-2023/05/26 07:52:14.361536 juicefs[3792668] <INFO>: Dump metadata into /home/juicefs_metadata_backups/meta-dump-20230526075214.json succeed [dump.go:76]
+2023/05/26 07:52:14.361536 juicefs[3792668] <INFO>: Dump metadata into /home/juicefs_mount/juicefs_metadata_backups/meta-dump-20230526075214.json succeed [dump.go:76]
 Backup successful!
 Deleted backups older than 30 days.
-Backup metadata file: /home/juicefs_metadata_backups/meta-dump-20230526075214.json.gz
+Backup metadata file: /home/juicefs_mount/juicefs_metadata_backups/meta-dump-20230526081031.json.gz
 ```
 
-Inspecting JuiceFS mount's metadata backup file `/home/juicefs_metadata_backups/meta-dump-20230526075214.json.gz`.
+Inspecting JuiceFS mount's S3 Gateway
 
 ```
-zcat /home/juicefs_metadata_backups/meta-dump-20230526075214.json.gz | jq -r
+aws --endpoint-url http://localhost:3777 s3 ls --recursive myjuicefs
+
+2023-05-26 08:10:31        728 juicefs_metadata_backups/meta-dump-20230526081031.json.gz
+```
+
+Inspecting JuiceFS mount's metadata backup file `/home/juicefs_mount/juicefs_metadata_backups/meta-dump-20230526081031.json.gz`.
+
+```
+zcat /home/juicefs_mount/juicefs_metadata_backups/meta-dump-20230526081031.json.gz | jq -r
 ```
 
 ```
-zcat /home/juicefs_metadata_backups/meta-dump-20230526075214.json.gz | jq -r
+zcat /home/juicefs_mount/juicefs_metadata_backups/meta-dump-20230526081031.json.gz | jq -r
 {
   "Setting": {
     "Name": "myjuicefs",

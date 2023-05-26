@@ -5,7 +5,7 @@ export PATH=$PATH:/usr/local/bin
 
 # Variables
 DAYS_TO_KEEP=30
-BACKUP_DIR="/home/juicefs_metadata_backups"
+BACKUP_DIR="/home/juicefs_mount/juicefs_metadata_backups"
 BACKUP_FILE_NAME="meta-dump"
 COMPRESSION="pigz"  # change to "zstd" for zstd compression
 PIGZ_COMP_LEVEL='-4'
