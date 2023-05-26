@@ -46,6 +46,8 @@ JuiceFS has a built-in multi-level cache (invalidated automatically). Once the c
   * [On Intel Core i7 4790K 4C/8T, 32GB memory and 2x 240GB SSD raid 1](#on-intel-core-i7-4790k-4c8t-32gb-memory-and-2x-240gb-ssd-raid-1)
     * [fio tests](#fio-test)
 * [Destroying JuiceFS Filesystem](#destroying-juicefs-filesystem)
+* [Backup JuiceFS Metadata Script](#backup-juicefs-metadata-script)
+  * [JuiceFS Backup Metadata Cronjob](#juicefs-backup-metadata-cronjob)
 
 # Install JuiceFS binary
 
@@ -298,6 +300,12 @@ juicefs mount sqlite3:///home/juicefs/myjuicefs.db /home/juicefs_mount \
 --put-timeout 900 \
 --io-retries 90 \
 --prefetch 1 -d
+```
+
+Note: As `--backup-meta 0` is set for Cloudflare R2 to disable automatic metadata backups, you can manually run the backup command to backup to a file i.e. `meta-dump.json`:
+
+```
+juicefs dump sqlite3:///home/juicefs/myjuicefs.db meta-dump.json
 ```
 
 ## systemd service Mount
@@ -1642,6 +1650,21 @@ Restart Redis servers
 
 ```
 systemctl restart juicefs.service juicefs-gateway.service
+```
+
+Note: As `--backup-meta 0` is set for Cloudflare R2 to disable automatic metadata backups, you can manually run the backup command to backup to a file i.e. `meta-dump.json`:
+
+```
+juicefs dump redis://:password@localhost:6479/1 meta-dump.json
+```
+
+```
+juicefs dump redis://:password@localhost:6479/1 meta-dump.json
+2023/05/26 07:19:58.883775 juicefs[3791823] <INFO>: Meta address: redis://:****@localhost:6479/1 [interface.go:401]
+2023/05/26 07:19:58.884482 juicefs[3791823] <INFO>: Ping redis: 19.157µs [redis.go:2904]
+2023/05/26 07:19:58.884709 juicefs[3791823] <WARNING>: Secret key is removed for the sake of safety [redis.go:3236]
+Dumped entries count: 5 / 5 [==============================================================]  done      
+2023/05/26 07:19:58.885830 juicefs[3791823] <INFO>: Dump metadata into meta-dump.json succeed [dump.go:76]
 ```
 
 ### JuiceFS Benchmarks 61x R2 Sharded Mount + Redis Metadata Caching
@@ -3003,4 +3026,129 @@ WARNING: 2. ALL entries in the metadata engine: sqlite3:///home/juicefs/myjuicef
 Proceed anyway? [y/N]: 
 Deleted objects count: 4282   
 2022/05/25 04:25:38.067123 juicefs[25759] <INFO>: The volume has been destroyed! You may need to delete cache directory manually. [destroy.go:211]
+```
+
+# Backup JuiceFS Metadata Script
+
+Note for Cloudflare R2, you need to [disable automatica metadata backups](https://juicefs.com/docs/community/how_to_setup_object_storage/#r2). So you can use `backup-juicefs-metadata.sh` shell script to setup a cronjob to backup the JuiceFS mount metadata cache.
+
+## backup-juicefs-metadata.sh Usage:
+
+```
+./backup-juicefs-metadata.sh 
+No arguments supplied. Please provide the metadata source as an argument.
+
+Examples:
+
+./backup-juicefs-metadata.sh sqlite3:///home/juicefs/myjuicefs.db
+./backup-juicefs-metadata.sh redis://:password@localhost:6479/1
+```
+
+## backup-juicefs-metadata.sh Example Backup
+
+The backup script uses [`juicefs dump`](https://juicefs.com/docs/community/metadata_dump_load#recovery-and-migration) command to backup the JuiceFS mount's metadata.
+
+```
+./backup-juicefs-metadata.sh redis://:password@localhost:6479/1
+```
+```
+./backup-juicefs-metadata.sh redis://:password@localhost:6479/1          
+2023/05/26 07:52:14.359874 juicefs[3792668] <INFO>: Meta address: redis://:****@localhost:6479/1 [interface.go:401]
+2023/05/26 07:52:14.360591 juicefs[3792668] <INFO>: Ping redis: 21.753µs [redis.go:2904]
+2023/05/26 07:52:14.360826 juicefs[3792668] <WARNING>: Secret key is removed for the sake of safety [redis.go:3236]
+Dumped entries count: 0 / 0 [--------------------------------------------------------------]  done      
+2023/05/26 07:52:14.361536 juicefs[3792668] <INFO>: Dump metadata into /home/juicefs_metadata_backups/meta-dump-20230526075214.json succeed [dump.go:76]
+Backup successful!
+Deleted backups older than 30 days.
+Backup metadata file: /home/juicefs_metadata_backups/meta-dump-20230526075214.json.gz
+```
+
+Inspecting JuiceFS mount's metadata backup file `/home/juicefs_metadata_backups/meta-dump-20230526075214.json.gz`.
+
+```
+zcat /home/juicefs_metadata_backups/meta-dump-20230526075214.json.gz | jq -r
+```
+
+```
+zcat /home/juicefs_metadata_backups/meta-dump-20230526075214.json.gz | jq -r
+{
+  "Setting": {
+    "Name": "myjuicefs",
+    "UUID": "UUID-UUID-UUID-UUID-UUID",
+    "Storage": "s3",
+    "Bucket": "https://juicefs-shard-%d.cf_account_id.r2.cloudflarestorage.com",
+    "AccessKey": "cfaccesskey",
+    "SecretKey": "removed",
+    "BlockSize": 4096,
+    "Compression": "none",
+    "Shards": 61,
+    "KeyEncrypted": true,
+    "MetaVersion": 1
+  },
+  "Counters": {
+    "usedSpace": 0,
+    "usedInodes": 0,
+    "nextInodes": 27001,
+    "nextChunk": 30001,
+    "nextSession": 14,
+    "nextTrash": 0
+  },
+  "Sustained": [],
+  "DelFiles": [],
+  "FSTree": {
+    "attr": {
+      "inode": 1,
+      "type": "directory",
+      "mode": 511,
+      "uid": 0,
+      "gid": 0,
+      "atime": 1685068161,
+      "mtime": 1685105530,
+      "ctime": 1685105530,
+      "mtimensec": 446053614,
+      "ctimensec": 446053614,
+      "nlink": 2,
+      "length": 0
+    },
+    "xattrs": [
+      {
+        "name": "lastBackup",
+        "value": "2023-05-26T05:50:33-05:00"
+      }
+    ],
+    "entries": {}
+  },
+  "Trash": {
+    "attr": {
+      "inode": 9223372032828243968,
+      "type": "directory",
+      "mode": 0,
+      "uid": 0,
+      "gid": 0,
+      "atime": 0,
+      "mtime": 0,
+      "ctime": 0,
+      "nlink": 1,
+      "length": 0
+    },
+    "entries": {}
+  }
+}
+```
+
+## JuiceFS Backup Metadata Cronjob
+
+Cronjob wrapper script `backup-juicefs-metadata-wrapper.sh`
+
+```bash
+#!/bin/bash
+/home/juicefs/backup-juicefs-metadata.sh redis://:password@localhost:6479/1
+```
+
+```
+chmod +x /home/juicefs/backup-juicefs-metadata-wrapper.sh
+```
+
+```
+10 * * * * /home/juicefs/backup-juicefs-metadata-wrapper.sh >/dev/null 2>&1
 ```
