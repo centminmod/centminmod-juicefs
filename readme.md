@@ -1645,7 +1645,7 @@ systemctl restart juicefs.service juicefs-gateway.service
 
 ### JuiceFS Benchmarks 21x R2 Sharded Mount + Redis Metadata Caching
 
-The table below shows comparison between [21x Cloudflare R2 sharded JuiceFS mount + Redis metadata caching](#juicefs-benchmarks-21x-r2-sharded-mount--redis-metadata-caching) vs [21x Cloudflare R2 sharded JuiceFS mount](#21x-r2-sharded-juicefs-mount) vs [1x Cloudflare JuiceFS mount (default)](#on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1). All R2 storage locations are with location hint North American East.
+The table below shows comparison between [21x Cloudflare R2 sharded JuiceFS mount + Redis metadata caching](#juicefs-benchmarks-21x-r2-sharded-mount--redis-metadata-caching) vs [10x Cloudflare R2 sharded JuiceFS mount + Redis metadata caching](#juicefs-benchmarks-10x-r2-sharded-mount--redis-metadata-caching) vs [10x Cloudflare R2 sharded JuiceFS mount](#10x-r2-sharded-juicefs-mount) vs [1x Cloudflare JuiceFS mount (default)](#on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1). All R2 storage locations are with location hint North American East.
 
 Default 1024MB big file.
 
