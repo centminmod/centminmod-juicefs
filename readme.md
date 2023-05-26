@@ -31,6 +31,7 @@ JuiceFS has a built-in multi-level cache (invalidated automatically). Once the c
   * [Check Disk Size](#check-disk-size)
 * [JuiceFS Benchmarks](#juicefs-benchmarks)
   * [Redis Metadata Cache + Sharded R2 Mount On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](#redis-metadata-cache--sharded-r2-mount-on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
+    * [JuiceFS Benchmarks 61x R2 Sharded Mount + Redis Metadata Caching](#juicefs-benchmarks-61x-r2-sharded-mount--redis-metadata-caching)
     * [JuiceFS Benchmarks 21x R2 Sharded Mount + Redis Metadata Caching](#juicefs-benchmarks-21x-r2-sharded-mount--redis-metadata-caching)
     * [JuiceFS Benchmarks 10x R2 Sharded Mount + Redis Metadata Caching](#juicefs-benchmarks-10x-r2-sharded-mount--redis-metadata-caching)
   * [Sharded R2 Mount On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](#sharded-r2-mount-on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
