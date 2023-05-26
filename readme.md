@@ -31,6 +31,7 @@ JuiceFS has a built-in multi-level cache (invalidated automatically). Once the c
   * [Check Disk Size](#check-disk-size)
 * [JuiceFS Benchmarks](#juicefs-benchmarks)
   * [Redis Metadata Cache + Sharded R2 Mount On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](#redis-metadata-cache--sharded-r2-mount-on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
+    * [JuiceFS Benchmarks 21x R2 Sharded Mount + Redis Metadata Caching](#juicefs-benchmarks-21x-r2-sharded-mount--redis-metadata-caching)
     * [JuiceFS Benchmarks 10x R2 Sharded Mount + Redis Metadata Caching](#juicefs-benchmarks-10x-r2-sharded-mount--redis-metadata-caching)
   * [Sharded R2 Mount On Intel Xeon E-2276G 6C/12T, 32GB memory and 2x 960GB NVMe raid 1](#sharded-r2-mount-on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1)
     * [10x Cloudflare R2 sharded JuiceFS mount](#10x-r2-sharded-juicefs-mount)
@@ -1640,6 +1641,223 @@ Restart Redis servers
 
 ```
 systemctl restart juicefs.service juicefs-gateway.service
+```
+
+### JuiceFS Benchmarks 21x R2 Sharded Mount + Redis Metadata Caching
+
+The table below shows comparison between [21x Cloudflare R2 sharded JuiceFS mount + Redis metadata caching](#juicefs-benchmarks-21x-r2-sharded-mount--redis-metadata-caching) vs [21x Cloudflare R2 sharded JuiceFS mount](#21x-r2-sharded-juicefs-mount) vs [1x Cloudflare JuiceFS mount (default)](#on-intel-xeon-e-2276g-6c12t-32gb-memory-and-2x-960gb-nvme-raid-1). All R2 storage locations are with location hint North American East.
+
+Default 1024MB big file.
+
+| ITEM | VALUE (21x R2 Sharded + Redis) | COST (21x R2 Sharded + Redis) | VALUE (10x R2 Sharded + Redis) | COST (10x R2 Sharded + Redis) | VALUE (10x R2 Sharded) | COST (10x R2 Sharded) | VALUE (1x R2 Default) | COST (1x R2 Default) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Write big file | 1774.18 MiB/s | 2.31 s/file | 1904.61 MiB/s | 2.15 s/file | 906.04 MiB/s | 4.52 s/file | 1374.08 MiB/s | 2.98 s/file |
+| Read big file | 162.36 MiB/s | 25.23 s/file | 201.00 MiB/s | 20.38 s/file | 223.19 MiB/s | 18.35 s/file | 152.23 MiB/s | 26.91 s/file |
+| Write small file | 2333.5 files/s | 1.71 ms/file | 1319.8 files/s | 3.03 ms/file | 701.2 files/s | 5.70 ms/file | 780.3 files/s | 5.13 ms/file |
+| Read small file | 10382.7 files/s | 0.39 ms/file | 10279.8 files/s | 0.39 ms/file | 6378.3 files/s | 0.63 ms/file | 8000.9 files/s | 0.50 ms/file |
+| Stat file | 15955.7 files/s | 0.25 ms/file | 15890.1 files/s | 0.25 ms/file | 21123.7 files/s | 0.19 ms/file | 27902.2 files/s | 0.14 ms/file |
+| FUSE operation | 71319 operations | 2.79 ms/op | 71338 operations | 2.23 ms/op | 71555 operations | 2.16 ms/op | 71649 operations | 3.06 ms/op |
+| Update meta | 1739 operations | 0.25 ms/op | 1740 operations | 0.27 ms/op | 6271 operations | 9.01 ms/op | 6057 operations | 2.50 ms/op |
+| Put object | 1055 operations | 514.85 ms/op | 1083 operations | 390.88 ms/op | 1152 operations | 403.23 ms/op | 1106 operations | 547.32 ms/op |
+| Get object | 1027 operations | 346.44 ms/op | 1024 operations | 294.63 ms/op | 1034 operations | 278.61 ms/op | 1030 operations | 301.80 ms/op |
+| Delete object | 736 operations | 195.40 ms/op | 754 operations | 125.28 ms/op | 316 operations | 124.32 ms/op | 29 operations | 234.02 ms/op |
+| Write into cache | 1424 operations | 7.19 ms/op | 1424 operations | 4.85 ms/op | 1424 operations | 24
+
+Default 1MB big file.
+
+| ITEM | VALUE (21x R2 Sharded + Redis) | COST (21x R2 Sharded + Redis) | VALUE (10x R2 Sharded + Redis) | COST (10x R2 Sharded + Redis) | VALUE (10x R2 Sharded) | COST (10x R2 Sharded) | VALUE (1x R2 Default) | COST (1x R2 Default) |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Write big file | 600.01 MiB/s | 0.01 s/file | 530.10 MiB/s | 0.01 s/file | 452.66 MiB/s | 0.01 s/file | 230.82 MiB/s | 0.02 s/file |
+| Read big file | 1300.69 MiB/s | 0.00 s/file | 1914.40 MiB/s | 0.00 s/file | 1545.95 MiB/s | 0.00 s/file | 1276.38 MiB/s | 0.00 s/file |
+| Write small file | 2648.3 files/s | 1.51 ms/file | 2715.4 files/s | 1.47 ms/file | 682.8 files/s | 5.86 ms/file | 675.7 files/s | 5.92 ms/file |
+| Read small file | 10442.4 files/s | 0.38 ms/file | 10069.0 files/s | 0.40 ms/file | 6299.4 files/s | 0.63 ms/file | 7833.1 files/s | 0.51 ms/file |
+| Stat file | 16277.5 files/s | 0.25 ms/file | 16545.3 files/s | 0.24 ms/file | 21365.2 files/s | 0.19 ms/file | 28226.1 files/s | 0.14 ms/file |
+| FUSE operation | 5765 operations | 0.09 ms/op | 5767 operations | 0.09 ms/op | 5757 operations | 0.42 ms/op | 5756 operations | 0.41 ms/op |
+| Update meta | 1617 operations | 0.18 ms/op | 1617 operations | 0.19 ms/op | 5814 operations | 0.72 ms/op | 5770 operations | 0.70 ms/op |
+| Put object | 30 operations | 369.65 ms/op | 37 operations | 290.94 ms/op | 107 operations | 282.68 ms/op | 118 operations | 242.35 ms/op |
+| Get object | 0 operations | 0.00 ms/op | 0 operations | 0.00 ms/op | 0 operations | 0.00 ms/op | 0 operations | 0.00 ms/op |
+| Delete object | 22 operations | 268.03 ms/op | 48 operations | 103.83 ms/op | 133 operations | 116.84 ms/op | 95 operations | 83.94 ms/op |
+| Write into cache | 404 operations | 0.11 ms/op | 404 operations | 0.11 ms/op | 404 operations | 0.12 ms/op | 404 operations | 
+
+21x R2 sharded JuiceFS mount with Redis metadata caching with location hint North American East
+
+Default 1024MB big file.
+
+```
+juicefs bench -p 4 /home/juicefs_mount/
+  Write big blocks count: 4096 / 4096 [===========================================================]  done      
+   Read big blocks count: 4096 / 4096 [===========================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1024 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 29.0 s, CPU: 107.6%, Memory: 799.9 MiB
++------------------+------------------+--------------+
+|       ITEM       |       VALUE      |     COST     |
++------------------+------------------+--------------+
+|   Write big file |    1774.18 MiB/s |  2.31 s/file |
+|    Read big file |     162.36 MiB/s | 25.23 s/file |
+| Write small file |   2333.5 files/s | 1.71 ms/file |
+|  Read small file |  10382.7 files/s | 0.39 ms/file |
+|        Stat file |  15955.7 files/s | 0.25 ms/file |
+|   FUSE operation | 71319 operations |   2.79 ms/op |
+|      Update meta |  1739 operations |   0.25 ms/op |
+|       Put object |  1055 operations | 514.85 ms/op |
+|       Get object |  1027 operations | 346.44 ms/op |
+|    Delete object |   736 operations | 195.40 ms/op |
+| Write into cache |  1424 operations |   7.19 ms/op |
+|  Read from cache |   400 operations |   0.05 ms/op |
++------------------+------------------+--------------+
+```
+
+Default 1MB big file.
+
+```
+juicefs bench -p 4 /home/juicefs_mount/ --big-file-size 1
+  Write big blocks count: 4 / 4 [==============================================================]  done      
+   Read big blocks count: 4 / 4 [==============================================================]  done      
+Write small blocks count: 400 / 400 [=============================================================]  done      
+ Read small blocks count: 400 / 400 [=============================================================]  done      
+  Stat small files count: 400 / 400 [=============================================================]  done      
+Benchmark finished!
+BlockSize: 1 MiB, BigFileSize: 1 MiB, SmallFileSize: 128 KiB, SmallFileCount: 100, NumThreads: 4
+Time used: 0.6 s, CPU: 86.1%, Memory: 121.1 MiB
++------------------+-----------------+--------------+
+|       ITEM       |      VALUE      |     COST     |
++------------------+-----------------+--------------+
+|   Write big file |    600.01 MiB/s |  0.01 s/file |
+|    Read big file |   1300.69 MiB/s |  0.00 s/file |
+| Write small file |  2648.3 files/s | 1.51 ms/file |
+|  Read small file | 10442.4 files/s | 0.38 ms/file |
+|        Stat file | 16277.5 files/s | 0.25 ms/file |
+|   FUSE operation | 5765 operations |   0.09 ms/op |
+|      Update meta | 1617 operations |   0.18 ms/op |
+|       Put object |   30 operations | 369.65 ms/op |
+|       Get object |    0 operations |   0.00 ms/op |
+|    Delete object |   22 operations | 268.03 ms/op |
+| Write into cache |  404 operations |   0.11 ms/op |
+|  Read from cache |  408 operations |   0.08 ms/op |
++------------------+-----------------+--------------+
+```
+
+```
+fio --name=sequential-write --directory=/home/juicefs_mount/fio --rw=write --refill_buffers --bs=4M --size=1G --end_fsync=1
+sequential-write: (g=0): rw=write, bs=(R) 4096KiB-4096KiB, (W) 4096KiB-4096KiB, (T) 4096KiB-4096KiB, ioengine=psync, iodepth=1
+fio-3.19
+Starting 1 process
+sequential-write: Laying out IO file (1 file / 1024MiB)
+Jobs: 1 (f=1)
+sequential-write: (groupid=0, jobs=1): err= 0: pid=3773486: Thu May 25 19:17:55 2023
+  write: IOPS=285, BW=1143MiB/s (1198MB/s)(1024MiB/896msec); 0 zone resets
+    clat (usec): min=2314, max=7625, avg=2899.57, stdev=787.63
+     lat (usec): min=2315, max=7626, avg=2900.44, stdev=787.90
+    clat percentiles (usec):
+     |  1.00th=[ 2343],  5.00th=[ 2376], 10.00th=[ 2409], 20.00th=[ 2442],
+     | 30.00th=[ 2507], 40.00th=[ 2540], 50.00th=[ 2606], 60.00th=[ 2704],
+     | 70.00th=[ 2835], 80.00th=[ 3032], 90.00th=[ 3982], 95.00th=[ 4817],
+     | 99.00th=[ 6390], 99.50th=[ 7111], 99.90th=[ 7635], 99.95th=[ 7635],
+     | 99.99th=[ 7635]
+   bw (  MiB/s): min= 1115, max= 1115, per=97.59%, avg=1115.26, stdev= 0.00, samples=1
+   iops        : min=  278, max=  278, avg=278.00, stdev= 0.00, samples=1
+  lat (msec)   : 4=90.23%, 10=9.77%
+  cpu          : usr=17.99%, sys=37.77%, ctx=8195, majf=0, minf=10
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=0,256,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+  WRITE: bw=1143MiB/s (1198MB/s), 1143MiB/s-1143MiB/s (1198MB/s-1198MB/s), io=1024MiB (1074MB), run=896-896msec
+```
+
+```
+fio --name=sequential-read --directory=/home/juicefs_mount/fio --rw=read --refill_buffers --bs=4M --size=1G --numjobs=4
+sequential-read: (g=0): rw=read, bs=(R) 4096KiB-4096KiB, (W) 4096KiB-4096KiB, (T) 4096KiB-4096KiB, ioengine=psync, iodepth=1
+...
+fio-3.19
+Starting 4 processes
+Jobs: 1 (f=1): [E(1),_(1),E(1),R(1)][-.-%][r=2294MiB/s][r=573 IOPS][eta 00m:00s]
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3773759: Thu May 25 19:24:59 2023
+  read: IOPS=135, BW=541MiB/s (567MB/s)(1024MiB/1893msec)
+    clat (usec): min=2841, max=16889, avg=7040.44, stdev=1440.49
+     lat (usec): min=2842, max=16890, avg=7042.04, stdev=1440.57
+    clat percentiles (usec):
+     |  1.00th=[ 3720],  5.00th=[ 5145], 10.00th=[ 5604], 20.00th=[ 6063],
+     | 30.00th=[ 6390], 40.00th=[ 6652], 50.00th=[ 6915], 60.00th=[ 7177],
+     | 70.00th=[ 7504], 80.00th=[ 7963], 90.00th=[ 8586], 95.00th=[ 9110],
+     | 99.00th=[11731], 99.50th=[12256], 99.90th=[16909], 99.95th=[16909],
+     | 99.99th=[16909]
+   bw (  KiB/s): min=501680, max=573440, per=24.78%, avg=546789.33, stdev=39279.97, samples=3
+   iops        : min=  122, max=  140, avg=133.33, stdev= 9.87, samples=3
+  lat (msec)   : 4=1.95%, 10=95.70%, 20=2.34%
+  cpu          : usr=0.58%, sys=63.11%, ctx=3077, majf=0, minf=1039
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3773760: Thu May 25 19:24:59 2023
+  read: IOPS=136, BW=546MiB/s (572MB/s)(1024MiB/1876msec)
+    clat (usec): min=2704, max=12163, avg=6973.28, stdev=1305.34
+     lat (usec): min=2706, max=12165, avg=6974.97, stdev=1305.26
+    clat percentiles (usec):
+     |  1.00th=[ 4490],  5.00th=[ 5145], 10.00th=[ 5604], 20.00th=[ 6063],
+     | 30.00th=[ 6456], 40.00th=[ 6652], 50.00th=[ 6849], 60.00th=[ 7046],
+     | 70.00th=[ 7308], 80.00th=[ 7767], 90.00th=[ 8455], 95.00th=[ 9110],
+     | 99.00th=[11863], 99.50th=[11994], 99.90th=[12125], 99.95th=[12125],
+     | 99.99th=[12125]
+   bw (  KiB/s): min=508031, max=589824, per=25.37%, avg=559829.00, stdev=45045.00, samples=3
+   iops        : min=  124, max=  144, avg=136.67, stdev=11.02, samples=3
+  lat (msec)   : 4=0.78%, 10=96.09%, 20=3.12%
+  cpu          : usr=0.75%, sys=63.89%, ctx=2980, majf=0, minf=1038
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3773761: Thu May 25 19:24:59 2023
+  read: IOPS=135, BW=540MiB/s (567MB/s)(1024MiB/1895msec)
+    clat (usec): min=2860, max=13822, avg=6935.78, stdev=1291.86
+     lat (usec): min=2861, max=13824, avg=6937.74, stdev=1292.03
+    clat percentiles (usec):
+     |  1.00th=[ 3916],  5.00th=[ 5080], 10.00th=[ 5669], 20.00th=[ 6128],
+     | 30.00th=[ 6390], 40.00th=[ 6587], 50.00th=[ 6915], 60.00th=[ 7111],
+     | 70.00th=[ 7373], 80.00th=[ 7701], 90.00th=[ 8094], 95.00th=[ 8848],
+     | 99.00th=[11600], 99.50th=[12387], 99.90th=[13829], 99.95th=[13829],
+     | 99.99th=[13829]
+   bw (  KiB/s): min=469928, max=581632, per=24.67%, avg=544397.33, stdev=64492.33, samples=3
+   iops        : min=  114, max=  142, avg=132.67, stdev=16.17, samples=3
+  lat (msec)   : 4=1.56%, 10=95.31%, 20=3.12%
+  cpu          : usr=0.37%, sys=64.15%, ctx=3083, majf=0, minf=1039
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+sequential-read: (groupid=0, jobs=1): err= 0: pid=3773762: Thu May 25 19:24:59 2023
+  read: IOPS=134, BW=539MiB/s (565MB/s)(1024MiB/1901msec)
+    clat (usec): min=1458, max=12052, avg=6959.56, stdev=1420.77
+     lat (usec): min=1458, max=12055, avg=6961.18, stdev=1420.80
+    clat percentiles (usec):
+     |  1.00th=[ 1516],  5.00th=[ 5080], 10.00th=[ 5669], 20.00th=[ 6063],
+     | 30.00th=[ 6390], 40.00th=[ 6718], 50.00th=[ 6915], 60.00th=[ 7177],
+     | 70.00th=[ 7504], 80.00th=[ 7898], 90.00th=[ 8291], 95.00th=[ 8848],
+     | 99.00th=[11338], 99.50th=[11994], 99.90th=[11994], 99.95th=[11994],
+     | 99.99th=[11994]
+   bw (  KiB/s): min=457227, max=581632, per=24.36%, avg=537433.00, stdev=69581.10, samples=3
+   iops        : min=  111, max=  142, avg=131.00, stdev=17.35, samples=3
+  lat (msec)   : 2=1.56%, 4=1.17%, 10=94.92%, 20=2.34%
+  cpu          : usr=0.47%, sys=63.26%, ctx=3125, majf=0, minf=1038
+  IO depths    : 1=100.0%, 2=0.0%, 4=0.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwts: total=256,0,0,0 short=0,0,0,0 dropped=0,0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=1
+
+Run status group 0 (all jobs):
+   READ: bw=2155MiB/s (2259MB/s), 539MiB/s-546MiB/s (565MB/s-572MB/s), io=4096MiB (4295MB), run=1876-1901msec
 ```
 
 ### JuiceFS Benchmarks 10x R2 Sharded Mount + Redis Metadata Caching
