@@ -3007,9 +3007,17 @@ rm -rf /home/juicefs_cache/*
 redis-cli -a password -h localhost -p 6479 flushall
 ```
 
+For Redis metadata cache cleanup if only using one R2 bucket
+
 ```
 # remove Cloudflare R2 bucket meta data from bucket s://juicefs/myjuicefs
 aws s3 rm --recursive --profile r2 --endpoint-url=$url s3://$cfbucketname/myjuicefs
+```
+
+For Redis metadata cache clean with multiple R2 buckets in sharded configuration using this repo's `bulk-delete-buckets-r2.sh` script to remove 61x R2 sharded buckets with names `juicefs-shard-*` from `juicefs-shard-0` to `juicefs-shard-60` for AWS CLI `r2` profile with AWS endpoint url = `https://cfaccountid.r2.cloudflarestorage.com`
+
+```
+./bulk-delete-buckets.sh r2 juicefs-shard- 61 https://cfaccountid.r2.cloudflarestorage.com
 ```
 
 ```
