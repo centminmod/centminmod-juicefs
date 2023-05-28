@@ -1740,18 +1740,18 @@ Default 1024MB big file.
 
 | ITEM | VALUE (100x R2 Sharded + Redis) | COST (100x R2 Sharded + Redis) | VALUE (61x R2 Sharded + Redis) | COST (61x R2 Sharded + Redis) | VALUE (21x R2 Sharded + Redis) | COST (21x R2 Sharded + Redis) | VALUE (10x R2 Sharded + Redis) | COST (10x R2 Sharded + Redis) | VALUE (10x R2 Sharded) | COST (10x R2 Sharded) | VALUE (1x R2 Default) | COST (1x R2 Default) |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Write big file | XXXX.XX MiB/s | XX.XX s/file | 1778.16 MiB/s | 2.30 s/file | 1774.18 MiB/s | 2.31 s/file | 1904.61 MiB/s | 2.15 s/file | 906.04 MiB/s | 4.52 s/file | 1374.08 MiB/s | 2.98 s/file |
-| Read big file | XXXX.XX MiB/s | XX.XX s/file | 231.92 MiB/s | 17.66 s/file | 162.36 MiB/s | 25.23 s/file | 201.00 MiB/s | 20.38 s/file | 223.19 MiB/s | 18.35 s/file | 152.23 MiB/s | 26.91 s/file |
-| Write small file | XXXX.XX files/s | XX.XX ms/file | 2449.2 files/s | 1.63 ms/file | 2333.5 files/s | 1.71 ms/file | 1319.8 files/s | 3.03 ms/file | 701.2 files/s | 5.70 ms/file | 780.3 files/s | 5.13 ms/file |
-| Read small file | XXXX.XX files/s | XX.XX ms/file | 5997.6 files/s | 0.67 ms/file | 10382.7 files/s | 0.39 ms/file | 10279.8 files/s | 0.39 ms/file | 6378.3 files/s | 0.63 ms/file | 8000.9 files/s | 0.50 ms/file |
-| Stat file | XXXX.XX files/s | XX.XX ms/file | 38302.2 files/s | 0.10 ms/file | 15955.7 files/s | 0.25 ms/file | 15890.1 files/s | 0.25 ms/file | 21123.7 files/s | 0.19 ms/file | 27902.2 files/s | 0.14 ms/file |
-| FUSE operation | XXXX.XX operations | XX.XX ms/op | 71292 operations | 1.80 ms/op | 71319 operations | 2.79 ms/op | 71338 operations | 2.23 ms/op | 71555 operations | 2.16 ms/op | 71649 operations | 3.06 ms/op |
-| Update meta | XXXX.XX operations | XX.XX ms/op | 1740 operations | 0.25 ms/op | 1739 operations | 0.25 ms/op | 1740 operations | 0.27 ms/op | 6271 operations | 9.01 ms/op | 6057 operations | 2.50 ms/op |
-| Put object | XXXX.XX operations | XX.XX ms/op | 1087 operations | 466.15 ms/op | 1055 operations | 514.85 ms/op | 1083 operations | 390.88 ms/op | 1152 operations | 403.23 ms/op | 1106 operations | 547.32 ms/op |
-| Get object | XXXX.XX operations | XX.XX ms/op | 1024 operations | 319.02 ms/op | 1027 operations | 346.44 ms/op | 1024 operations | 294.63 ms/op | 1034 operations | 278.61 ms/op | 1030 operations | 301.80 ms/op |
-| Delete object | XXXX.XX operations | XX.XX ms/op | 215 operations | 201.12 ms/op | 736 operations | 195.40 ms/op | 754 operations | 125.28 ms/op | 316 operations | 124.32 ms/op | 29 operations | 234.02 ms/op |
-| Write into cache | XXXX.XX operations | XX.XX ms/op | 1424 operations | 5.36 ms/op | 1424 operations | 7.19 ms/op | 1424 operations | 4.85 ms/op | 1424 operations | 24 ms/op | 1424 operations | 7.19 ms/op |
-| Read from cache | XXXX.XX operations | XX.XX ms/op | 400 operations | 0.07 ms/op | 400 operations | 0.05 ms/op | 400 operations | 0.05 ms/op | 400 operations | 0.05 ms/op | 400 operations | 0.04 ms/op |
+| Write big file | 1103.70 MiB/s | 7.42 s/file | 1778.16 MiB/s | 2.30 s/file | 1774.18 MiB/s | 2.31 s/file | 1904.61 MiB/s | 2.15 s/file | 906.04 MiB/s | 4.52 s/file | 1374.08 MiB/s | 2.98 s/file |
+| Read big file | 342.66 MiB/s | 23.91 s/file | 231.92 MiB/s | 17.66 s/file | 162.36 MiB/s | 25.23 s/file | 201.00 MiB/s | 20.38 s/file | 223.19 MiB/s | 18.35 s/file | 152.23 MiB/s | 26.91 s/file |
+| Write small file | 2505.3 files/s | 3.19 ms/file | 2449.2 files/s | 1.63 ms/file | 2333.5 files/s | 1.71 ms/file | 1319.8 files/s | 3.03 ms/file | 701.2 files/s | 5.70 ms/file | 780.3 files/s | 5.13 ms/file |
+| Read small file | 13321.4 files/s | 0.60 ms/file | 5997.6 files/s | 0.67 ms/file | 10382.7 files/s | 0.39 ms/file | 10279.8 files/s | 0.39 ms/file | 6378.3 files/s | 0.63 ms/file | 8000.9 files/s | 0.50 ms/file |
+| Stat file | 16229.5 files/s | 0.49 ms/file | 38302.2 files/s | 0.10 ms/file | 15955.7 files/s | 0.25 ms/file | 15890.1 files/s | 0.25 ms/file | 21123.7 files/s | 0.19 ms/file | 27902.2 files/s | 0.14 ms/file |
+| FUSE operation | 142585 operations | 2.51 ms/op | 71292 operations | 1.80 ms/op | 71319 operations | 2.79 ms/op | 71338 operations | 2.23 ms/op | 71555 operations | 2.16 ms/op | 71649 operations | 3.06 ms/op |
+| Update meta | 3473 operations | 1.98 ms/op | 1740 operations | 0.25 ms/op | 1739 operations | 0.25 ms/op | 1740 operations | 0.27 ms/op | 6271 operations | 9.01 ms/op | 6057 operations | 2.50 ms/op |
+| Put object | 2847 operations | 470.88 ms/op | 1087 operations | 466.15 ms/op | 1055 operations | 514.85 ms/op | 1083 operations | 390.88 ms/op | 1152 operations | 403.23 ms/op | 1106 operations | 547.32 ms/op |
+| Get object | 2048 operations | 402.89 ms/op | 1024 operations | 319.02 ms/op | 1027 operations | 346.44 ms/op | 1024 operations | 294.63 ms/op | 1034 operations | 278.61 ms/op | 1030 operations | 301.80 ms/op |
+| Delete object | 440 operations | 174.48 ms/op | 215 operations | 201.12 ms/op | 736 operations | 195.40 ms/op | 754 operations | 125.28 ms/op | 316 operations | 124.32 ms/op | 29 operations | 234.02 ms/op |
+| Write into cache | 2848 operations | 13.31 ms/op | 1424 operations | 5.36 ms/op | 1424 operations | 7.19 ms/op | 1424 operations | 4.85 ms/op | 1424 operations | 24 ms/op | 1424 operations | 7.19 ms/op |
+| Read from cache | 800 operations | 0.09 ms/op | 400 operations | 0.07 ms/op | 400 operations | 0.05 ms/op | 400 operations | 0.05 ms/op | 400 operations | 0.05 ms/op | 400 operations | 0.04 ms/op |
 
 Default 1MB big file.
 
