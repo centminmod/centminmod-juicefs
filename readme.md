@@ -1832,6 +1832,113 @@ Time used: 0.8 s, CPU: 210.4%, Memory: 605.2 MiB
 +------------------+------------------+--------------+
 ```
 
+100x Cloudflare R2 buckets info using `sharded-buckets-info-r2.sh` passing AWS CLI profile `r2` with R2 bucket prefix `juicefs-shard-` for `100` sharded buckets and `https://cfaccountid.r2.cloudflarestorage.com` R2 endpoint.
+
+```
+./sharded-buckets-info-r2.sh r2 juicefs-shard- 100 https://cfaccountid.r2.cloudflarestorage.com
+Bucket: juicefs-shard-0, Total Files: 34, Total Size: 4456448
+Bucket: juicefs-shard-1, Total Files: 22, Total Size: 2627642
+Bucket: juicefs-shard-2, Total Files: 28, Total Size: 3670016
+Bucket: juicefs-shard-3, Total Files: 31, Total Size: 3935716
+Bucket: juicefs-shard-4, Total Files: 28, Total Size: 3670016
+Bucket: juicefs-shard-5, Total Files: 39, Total Size: 5111808
+Bucket: juicefs-shard-6, Total Files: 35, Total Size: 4459354
+Bucket: juicefs-shard-7, Total Files: 36, Total Size: 5506235
+Bucket: juicefs-shard-8, Total Files: 140, Total Size: 20185088
+Bucket: juicefs-shard-9, Total Files: 59, Total Size: 7733248
+Bucket: juicefs-shard-10, Total Files: 50, Total Size: 6553600
+Bucket: juicefs-shard-11, Total Files: 40, Total Size: 5242880
+Bucket: juicefs-shard-12, Total Files: 63, Total Size: 10092544
+Bucket: juicefs-shard-13, Total Files: 28, Total Size: 3670016
+Bucket: juicefs-shard-14, Total Files: 31, Total Size: 4063232
+Bucket: juicefs-shard-15, Total Files: 72, Total Size: 9437184
+Bucket: juicefs-shard-16, Total Files: 37, Total Size: 4849664
+Bucket: juicefs-shard-17, Total Files: 41, Total Size: 5373952
+Bucket: juicefs-shard-18, Total Files: 123, Total Size: 18874368
+Bucket: juicefs-shard-19, Total Files: 39, Total Size: 6029312
+Bucket: juicefs-shard-20, Total Files: 30, Total Size: 3932160
+Bucket: juicefs-shard-21, Total Files: 30, Total Size: 3932160
+Bucket: juicefs-shard-22, Total Files: 42, Total Size: 5505024
+Bucket: juicefs-shard-23, Total Files: 173, Total Size: 23592960
+Bucket: juicefs-shard-24, Total Files: 42, Total Size: 5505024
+Bucket: juicefs-shard-25, Total Files: 41, Total Size: 5373952
+Bucket: juicefs-shard-26, Total Files: 33, Total Size: 4198517
+Bucket: juicefs-shard-27, Total Files: 35, Total Size: 6422528
+Bucket: juicefs-shard-28, Total Files: 62, Total Size: 8126464
+Bucket: juicefs-shard-29, Total Files: 34, Total Size: 4327957
+Bucket: juicefs-shard-30, Total Files: 28, Total Size: 3670016
+Bucket: juicefs-shard-31, Total Files: 40, Total Size: 5242880
+Bucket: juicefs-shard-32, Total Files: 32, Total Size: 4194304
+Bucket: juicefs-shard-33, Total Files: 76, Total Size: 9961472
+Bucket: juicefs-shard-34, Total Files: 31, Total Size: 4063232
+Bucket: juicefs-shard-35, Total Files: 45, Total Size: 6685553
+Bucket: juicefs-shard-36, Total Files: 41, Total Size: 5242916
+Bucket: juicefs-shard-37, Total Files: 29, Total Size: 3801088
+Bucket: juicefs-shard-38, Total Files: 123, Total Size: 16911519
+Bucket: juicefs-shard-39, Total Files: 47, Total Size: 6160384
+Bucket: juicefs-shard-40, Total Files: 27, Total Size: 3538944
+Bucket: juicefs-shard-41, Total Files: 46, Total Size: 5899407
+Bucket: juicefs-shard-42, Total Files: 34, Total Size: 4326157
+Bucket: juicefs-shard-43, Total Files: 34, Total Size: 4456448
+Bucket: juicefs-shard-44, Total Files: 42, Total Size: 6422528
+Bucket: juicefs-shard-45, Total Files: 159, Total Size: 21757952
+Bucket: juicefs-shard-46, Total Files: 45, Total Size: 5898240
+Bucket: juicefs-shard-47, Total Files: 56, Total Size: 8257536
+Bucket: juicefs-shard-48, Total Files: 40, Total Size: 5242880
+Bucket: juicefs-shard-49, Total Files: 51, Total Size: 6684672
+Bucket: juicefs-shard-50, Total Files: 29, Total Size: 3801088
+Bucket: juicefs-shard-51, Total Files: 179, Total Size: 23461888
+Bucket: juicefs-shard-52, Total Files: 40, Total Size: 5112935
+Bucket: juicefs-shard-53, Total Files: 138, Total Size: 19795756
+Bucket: juicefs-shard-54, Total Files: 62, Total Size: 8914826
+Bucket: juicefs-shard-55, Total Files: 41, Total Size: 6291456
+Bucket: juicefs-shard-56, Total Files: 72, Total Size: 9437184
+Bucket: juicefs-shard-57, Total Files: 45, Total Size: 6815744
+Bucket: juicefs-shard-58, Total Files: 32, Total Size: 4064159
+Bucket: juicefs-shard-59, Total Files: 38, Total Size: 6685639
+Bucket: juicefs-shard-60, Total Files: 34, Total Size: 4456448
+Bucket: juicefs-shard-61, Total Files: 41, Total Size: 5373952
+Bucket: juicefs-shard-62, Total Files: 34, Total Size: 4329917
+Bucket: juicefs-shard-63, Total Files: 61, Total Size: 8912896
+Bucket: juicefs-shard-64, Total Files: 50, Total Size: 7471104
+Bucket: juicefs-shard-65, Total Files: 37, Total Size: 4849664
+Bucket: juicefs-shard-66, Total Files: 38, Total Size: 4980736
+Bucket: juicefs-shard-67, Total Files: 119, Total Size: 16515072
+Bucket: juicefs-shard-68, Total Files: 115, Total Size: 15990784
+Bucket: juicefs-shard-69, Total Files: 39, Total Size: 5111808
+Bucket: juicefs-shard-70, Total Files: 63, Total Size: 9966336
+Bucket: juicefs-shard-71, Total Files: 44, Total Size: 5767168
+Bucket: juicefs-shard-72, Total Files: 31, Total Size: 4063232
+Bucket: juicefs-shard-73, Total Files: 42, Total Size: 5244609
+Bucket: juicefs-shard-74, Total Files: 25, Total Size: 3276800
+Bucket: juicefs-shard-75, Total Files: 47, Total Size: 6030141
+Bucket: juicefs-shard-76, Total Files: 69, Total Size: 9043968
+Bucket: juicefs-shard-77, Total Files: 54, Total Size: 7995392
+Bucket: juicefs-shard-78, Total Files: 128, Total Size: 16518412
+Bucket: juicefs-shard-79, Total Files: 104, Total Size: 13631488
+Bucket: juicefs-shard-80, Total Files: 77, Total Size: 10092544
+Bucket: juicefs-shard-81, Total Files: 49, Total Size: 6422528
+Bucket: juicefs-shard-82, Total Files: 54, Total Size: 7077888
+Bucket: juicefs-shard-83, Total Files: 84, Total Size: 11010048
+Bucket: juicefs-shard-84, Total Files: 96, Total Size: 12582912
+Bucket: juicefs-shard-85, Total Files: 50, Total Size: 7471104
+Bucket: juicefs-shard-86, Total Files: 32, Total Size: 4194304
+Bucket: juicefs-shard-87, Total Files: 41, Total Size: 6291456
+Bucket: juicefs-shard-88, Total Files: 81, Total Size: 10616832
+Bucket: juicefs-shard-89, Total Files: 114, Total Size: 14942208
+Bucket: juicefs-shard-90, Total Files: 37, Total Size: 5767168
+Bucket: juicefs-shard-91, Total Files: 54, Total Size: 7077888
+Bucket: juicefs-shard-92, Total Files: 62, Total Size: 8126464
+Bucket: juicefs-shard-93, Total Files: 56, Total Size: 7340032
+Bucket: juicefs-shard-94, Total Files: 35, Total Size: 4587520
+Bucket: juicefs-shard-95, Total Files: 46, Total Size: 6946816
+Bucket: juicefs-shard-96, Total Files: 41, Total Size: 6291456
+Bucket: juicefs-shard-97, Total Files: 151, Total Size: 19791872
+Bucket: juicefs-shard-98, Total Files: 92, Total Size: 12976128
+Bucket: juicefs-shard-99, Total Files: 177, Total Size: 24117248
+Total for all buckets, Total Files: 5804, Total Size: 792512215
+```
+
 ### JuiceFS Benchmarks 61x R2 Sharded Mount + Redis Metadata Caching
 
 Format JuiceFS sharded mount to use Redis metadata caching via `redis://:password@localhost:6479/1`
